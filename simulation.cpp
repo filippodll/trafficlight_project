@@ -75,7 +75,7 @@ int main() {
     std::cout << "Number of streets: " << graph.streetSet().size() << '\n';
 
     for (const auto &[streetId, street] : graph.streetSet()) {
-    //std::cout << "Street ID: " << streetId << ", lanes=" << static_cast<int>(street->nLanes()) << ", len= " << static_cast<int>(street->length()) << ", capacity= " << static_cast<int>(street->capacity()) << std::endl;
+    std::cout << "Street ID: " << streetId << ", lanes=" << static_cast<int>(street->nLanes()) << ", len= " << static_cast<int>(street->length()) << ", capacity= " << static_cast<int>(street->capacity()) << std::endl;
     
     //here we need to assign the status "spira" to the streets that have a 
     
