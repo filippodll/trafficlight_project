@@ -22,7 +22,7 @@ std::atomic_int progress{0};
 #define OPTIMIZE
 
 
-constexpr double ERROR_PROBABILITY{0.3}; // seed for random number generator
+constexpr double ERROR_PROBABILITY{0.05}; 
 constexpr int SEED{69}; // seed for random number generator
 const std::string IN_COORDS{"./coordinates.dsm"}; // input coords file
 const std::string OUT_FOLDER{"./datas" + std::to_string(SEED) + "_op/"}; // output folder
@@ -32,12 +32,12 @@ const std::string OUT_FOLDER{"./datas" + std::to_string(SEED) + "_op/"}; // outp
 using Unit = unsigned int;
 using Delay = uint8_t;
 
-using Graph = dsm::Graph<Unit, Unit>;
-using Itinerary = dsm::Itinerary<Unit>;
-using Dynamics = dsm::FirstOrderDynamics<Unit, Unit, Delay>;
-using Street = dsm::Street<Unit, Unit>;
-using SpireStreet = dsm::SpireStreet<Unit, Unit>;
-using TrafficLight = dsm::TrafficLight<Unit, Unit, Delay>;
+using Graph = dsm::Graph;
+using Itinerary = dsm::Itinerary;
+using Dynamics = dsm::FirstOrderDynamics<Delay>;
+using Street = dsm::Street;
+using SpireStreet = dsm::SpireStreet;
+using TrafficLight = dsm::TrafficLight<Delay>;
 
 void printLoadingBar(int const i, int const n) {
   std::cout << "Loading: " << std::setprecision(2) << std::fixed
@@ -205,13 +205,13 @@ int main() {
 
 
 
-  
+
   // print nodes and streets
   std::cout << "Nodes: " << graph.nodeSet().size() << '\n';
   std::cout << "Streets: " << graph.streetSet().size() << '\n';
 
   for (const auto &[streetId, street] : graph.streetSet()) {
-    std::cout << "Street ID: " << streetId << ", lanes=" << static_cast<int>(street->nLanes()) << ", len= " << static_cast<int>(street->length()) << ", capacity= " << static_cast<int>(street->capacity()) << std::endl;
+    std::cout << "Street ID: " << streetId << ", lanes=" << static_cast<int>(street->nLanes()) << ", len= " << static_cast<int>(street->length()) << ", capacity= " << static_cast<int>(street->capacity()) << ", nodeIN = " << street->nodePair().first << ", nodeOUT = " << street->nodePair().second << std::endl;
   }
 
 
@@ -220,12 +220,13 @@ int main() {
 
   // Create the dynamics
   Dynamics dynamics{graph};
-  dynamics.setSeed(69);
+  dynamics.setSeed(SEED);
+  //dynamics.setErrorProbability(ERROR_PROBABILITY);
   dynamics.setMinSpeedRateo(0.95);
   dynamics.setSpeedFluctuationSTD(0.2);
 
-  std::unordered_map<Unit, double> src{{0, 0.26}, {8, 0.25}, {9, 0.05}, {10, 0.02}, {11, 0.01}, {12, 0.02}, {13, 0.1}, {14, 0.05}, {16, 0.05}, {17, 0.1}, {18, 0.05}, {19, 0.01}, {20, 0.03}};
-  std::unordered_map<Unit, double> dst{{0, 0.18}, {8, 0.10}, {9, 0.08}, {11, 0.02}, {13, 0.08}, {14, 0.08}, {15, 0.02}, {17, 0.08}, {18, 0.08}, {19, 0.28}};
+  std::unordered_map<Unit, double> src{{0, 0.3}, {8, 0.27}, {9, 0.04}, {10, 0.01}, {11, 0.01}, {12, 0.01}, {13, 0.09}, {14, 0.06}, {16, 0.04}, {17, 0.1}, {18, 0.05}, {19, 0.01}, {20, 0.01}};
+  std::unordered_map<Unit, double> dst{{0, 0.195}, {8, 0.22}, {9, 0.08}, {11, 0.02}, {13, 0.08}, {14, 0.08}, {15, 0.005}, {17, 0.08}, {18, 0.08}, {19, 0.16}};
 
   // dynamics.addItinerary(Itinerary{0, 0});
   // dynamics.addItinerary(Itinerary{1, 8});
@@ -281,7 +282,7 @@ int main() {
 
 
   // Evolution
-  uint nAgents{40};
+  uint nAgents{83};
 
 
   while (progress < MAX_TIME) {
