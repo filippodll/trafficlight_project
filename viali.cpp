@@ -204,8 +204,22 @@ int main() {
   graph.adjustNodeCapacities();
   graph.normalizeStreetCapacities();
 
+  auto const& nNodes = graph.nodeSet().size();
+  auto const& adj{graph.adjMatrix()};
+  std::ofstream adjFile(OUT_FOLDER + "adj.dat");
+  adjFile << nNodes << '\t' << nNodes << std::endl;
+  for (auto i{0}; i < nNodes; ++i) {
+    for (auto j{0}; j < nNodes; ++j) {
+      adjFile << adj(i, j);
+      if (j != nNodes - 1) {
+        adjFile << '\t';
+      }
+    }
+    adjFile << std::endl;
+  }
+  adjFile.close();
 
-
+  return 0;
 
   // print nodes and streets
   std::cout << "Nodes: " << graph.nodeSet().size() << '\n';
@@ -294,7 +308,7 @@ int main() {
 
 
   // Evolution
-  uint nAgents{10};
+  uint nAgents{60};
  
 
   while (progress < MAX_TIME) {
