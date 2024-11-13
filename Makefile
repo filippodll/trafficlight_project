@@ -5,5 +5,5 @@ simulation:
 
 viali: 
 	clear
-	g++ -std=c++20 -O3 viali.cpp -o viali.out
+	cmake -B build -DCMAKE_BUILD_TYPE=Release && make -C build
 	./viali.out
