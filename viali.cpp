@@ -6,6 +6,7 @@
 #include <iostream>
 #include <map>
 #include <string>
+#include <filesystem>
 
 #include <thread>
 #include <atomic>
@@ -302,7 +303,20 @@ int main() {
 
 
         if (progress % 30 == 0) {
-          dynamics.addAgentsRandomly(nAgents, src, dst);
+          try {
+            dynamics.addAgentsRandomly(nAgents, src, dst);
+          } catch (const std::exception &e) {
+            std::cerr << e.what() << '\n';
+            for (auto const& [id, agent] : dynamics.agents()) {
+              std::cout << "Agent ID " << id << " srcNodeID " << agent->srcNodeId().value() << " dstNodeID " << agent->itineraryId();
+              if (agent->streetId().has_value()) {
+                std::cout << " streetID " << agent->streetId().value();
+              }
+              std::cout << std::endl;
+            }
+            break;
+          }
+          
         }
       dynamics.evolve(false);
       
