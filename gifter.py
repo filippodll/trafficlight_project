@@ -38,7 +38,7 @@ elif platform.system() == "Darwin":  # MAC OS
     FONT_PATH = "/System/Library/Fonts/Supplemental/Arial.ttf"
 
 
-def create_image(__df, __time, _graph, _pos, _n):
+def create_image(__df, __time, _graph, _pos, _n, _edges):
     """
     Generates and saves an image of a graph with edges colored based on density.
 
@@ -57,7 +57,7 @@ def create_image(__df, __time, _graph, _pos, _n):
         # set color of edge based on density using a colormap from green to red
         _graph[src][dst]["color"] = COLORMAP(density)
         # draw graph with colors
-    colors = [_graph[u][v]["color"] for u, v in edges]
+    colors = [_graph[u][v]["color"] for u, v in _edges]
     # draw graph
     _, ax = plt.subplots(figsize=(10, 10))
     nx.draw(_graph, _pos, edge_color=colors, with_labels=True, ax=ax)
@@ -155,6 +155,7 @@ if __name__ == "__main__":
                         G,
                         pos,
                         n,
+                        edges,
                     ),
                 )
             )
