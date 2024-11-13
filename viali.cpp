@@ -122,12 +122,12 @@ int main() {
   
 
   // saragozza
-  tl1.setDelay(std::make_pair(62, 70)); // 40, 70
+  tl1.setDelay(std::make_pair(62, 40)); // 40, 70
   tl1.setCapacity(1);
   tl1.addStreetPriority(s0_1.id());
   tl1.addStreetPriority(s2_1.id());
   // vallescura
-  tl2.setDelay(std::make_pair(72, 69)); // 50, 75
+  tl2.setDelay(std::make_pair(72, 39)); // 50, 75
   tl2.setCapacity(1);
   tl2.addStreetPriority(s1_2.id());
   tl2.addStreetPriority(s3_2.id());
@@ -137,22 +137,22 @@ int main() {
   tl3.addStreetPriority(s2_3.id());
   tl2.addStreetPriority(s4_3.id());
   // savenella
-  tl4.setDelay(std::make_pair(81, 50)); // 38, 106 = 144
+  tl4.setDelay(std::make_pair(100, 15)); // 38, 106 = 144
   tl4.setCapacity(1);
 
   tl4.addStreetPriority(s5_4.id());
   // rubbiani
-  tl5.setDelay(std::make_pair(72, 69)); // 50, 75
+  tl5.setDelay(std::make_pair(82, 39)); // 50, 75
   tl5.setCapacity(1);
   tl5.addStreetPriority(s3_5.id());
   tl5.addStreetPriority(s6_5.id());
   // castiglione
-  tl6.setDelay(std::make_pair(88, 50)); // 40, 70
+  tl6.setDelay(std::make_pair(88, 40)); // 40, 70
   tl6.setCapacity(1);
   tl6.addStreetPriority(s5_6.id());
   tl6.addStreetPriority(s7_6.id());
   // santo stefano
-  tl7.setDelay(std::make_pair(81, 50)); // 38, 106 = 144
+  tl7.setDelay(std::make_pair(81, 40)); // 38, 106 = 144
   tl7.setCapacity(1);
   tl7.addStreetPriority(s6_7.id());
   tl7.addStreetPriority(s8_7.id());
@@ -211,9 +211,12 @@ int main() {
   std::cout << "Streets: " << graph.streetSet().size() << '\n';
 
   for (const auto &[streetId, street] : graph.streetSet()) {
-    std::cout << "Street ID: " << streetId << ", lanes=" << static_cast<int>(street->nLanes()) << ", len= " << static_cast<int>(street->length()) << ", capacity= " << static_cast<int>(street->capacity()) << ", nodeIN = " << street->nodePair().first << ", nodeOUT = " << street->nodePair().second << std::endl;
+    std::cout << "Street ID: " << streetId << ", lanes=" << static_cast<int>(street->nLanes()) << ", len= " << static_cast<int>(street->length()) << ", capacity= " << static_cast<int>(street->capacity()) << ", nodeIN = " << street->nodePair().first << ", nodeOUT = " << street->nodePair().second <<  std::endl;
   }
 
+  for (const auto &[nodeId, node] : graph.nodeSet()) {
+    std::cout << "ID = " << node->id() << ", transportCapacity = " << node->transportCapacity() << std::endl;
+  }
 
 
 
@@ -262,7 +265,15 @@ int main() {
     streetDensity << id << ';';
   }
   streetDensity << '\n';
+
+  std::ofstream nodeDensity(OUT_FOLDER + "nodedensities.csv");
+  nodeDensity << "time;";
+  for (const auto &[id, node] : dynamics.graph().nodeSet()) {
+    nodeDensity << id << ';';
+  }
+  nodeDensity << '\n';
 #endif
+
 #ifdef PRINT_FLOWS
   std::ofstream streetFlow(OUT_FOLDER + "flows.csv");
   streetFlow << "time;";
@@ -282,8 +293,8 @@ int main() {
 
 
   // Evolution
-  uint nAgents{83};
-
+  uint nAgents{10};
+ 
 
   while (progress < MAX_TIME) {
 
@@ -325,6 +336,11 @@ int main() {
         streetDensity << street->normDensity() << ';';
       }
       streetDensity << std::endl;
+      nodeDensity << dynamics.time() << ';';
+      for (const auto &[id, node] : dynamics.graph().nodeSet()) {
+        nodeDensity << node->density() << ';';
+      }
+      nodeDensity << std::endl;
 #endif
 #ifdef PRINT_FLOWS
       streetFlow << dynamics.time() << ';';
