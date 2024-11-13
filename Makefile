@@ -7,3 +7,7 @@ viali:
 	clear
 	cmake -B build -DCMAKE_BUILD_TYPE=Release && make -C build
 	./viali.out
+
+gifter:
+	clear
+	python gifter.py --adj_matrix ./adj.dat --coordinates ./aldo.dsm
