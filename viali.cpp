@@ -124,36 +124,43 @@ int main() {
 
   // saragozza
   tl1.setDelay(std::make_pair(62, 40)); // 40, 70
+  tl1.setLeftTurnRatio(1./3);
   tl1.setCapacity(1);
   tl1.addStreetPriority(s0_1.id());
   tl1.addStreetPriority(s2_1.id());
   // vallescura
   tl2.setDelay(std::make_pair(72, 39)); // 50, 75
+  tl2.setLeftTurnRatio(1./3);
   tl2.setCapacity(1);
   tl2.addStreetPriority(s1_2.id());
   tl2.addStreetPriority(s3_2.id());
   // san mamolo
   tl3.setDelay(std::make_pair(88, 50)); // 40, 70
+  tl3.setLeftTurnRatio(1./3);
   tl3.setCapacity(1);
   tl3.addStreetPriority(s2_3.id());
   tl2.addStreetPriority(s4_3.id());
   // savenella
   tl4.setDelay(std::make_pair(100, 15)); // 38, 106 = 144
   tl4.setCapacity(1);
+  
 
   tl4.addStreetPriority(s5_4.id());
   // rubbiani
   tl5.setDelay(std::make_pair(82, 39)); // 50, 75
+  tl5.setLeftTurnRatio(1./3);
   tl5.setCapacity(1);
   tl5.addStreetPriority(s3_5.id());
   tl5.addStreetPriority(s6_5.id());
   // castiglione
-  tl6.setDelay(std::make_pair(88, 40)); // 40, 70
+  tl6.setDelay(std::make_pair(78, 45)); // 40, 70
+  tl6.setLeftTurnRatio(1./3);
   tl6.setCapacity(1);
   tl6.addStreetPriority(s5_6.id());
   tl6.addStreetPriority(s7_6.id());
   // santo stefano
   tl7.setDelay(std::make_pair(81, 40)); // 38, 106 = 144
+  tl7.setLeftTurnRatio(1./3);
   tl7.setCapacity(1);
   tl7.addStreetPriority(s6_7.id());
   tl7.addStreetPriority(s8_7.id());
@@ -204,6 +211,12 @@ int main() {
   graph.adjustNodeCapacities();
   graph.normalizeStreetCapacities();
 
+  for (const auto &[id, street] : graph.streetSet()) {
+    if (!street->isSpire()) {
+      std::cout << "Street " << id << " is not a spire.\n";
+    }
+  }
+
   auto const& nNodes = graph.nodeSet().size();
   auto const& adj{graph.adjMatrix()};
   std::ofstream adjFile(OUT_FOLDER + "adj.dat");
@@ -219,7 +232,7 @@ int main() {
   }
   adjFile.close();
 
-  return 0;
+  
 
   // print nodes and streets
   std::cout << "Nodes: " << graph.nodeSet().size() << '\n';
@@ -305,10 +318,21 @@ int main() {
   }
   streetSpeed << '\n';
 #endif
-
+#ifdef PRINT_OUT_SPIRES
+  std::ofstream outSpires(OUT_FOLDER + "out_spires.csv");
+  std::ofstream inSpires(OUT_FOLDER + "in_spires.csv");
+  outSpires << "time;";
+  inSpires << "time;";
+  for (const auto &[id, street] : dynamics.graph().streetSet()) {
+    outSpires << id << ';';
+    inSpires << id << ';';
+  }
+  outSpires << '\n';
+  inSpires << '\n';
+#endif
 
   // Evolution
-  uint nAgents{60};
+  uint nAgents{80};
  
 
   while (progress < MAX_TIME) {
@@ -322,11 +346,11 @@ int main() {
           } catch (const std::exception &e) {
             std::cerr << e.what() << '\n';
             for (auto const& [id, agent] : dynamics.agents()) {
-              std::cout << "Agent ID " << id << " srcNodeID " << agent->srcNodeId().value() << " dstNodeID " << agent->itineraryId();
+              //std::cout << "Agent ID " << id << " srcNodeID " << agent->srcNodeId().value() << " dstNodeID " << agent->itineraryId();
               if (agent->streetId().has_value()) {
-                std::cout << " streetID " << agent->streetId().value();
+                //std::cout << " streetID " << agent->streetId().value();
               }
-              std::cout << std::endl;
+              //std::cout << std::endl;
             }
             break;
           }
@@ -393,6 +417,19 @@ int main() {
         }
       }
       streetSpeed << std::endl;
+#endif
+#ifdef PRINT_OUT_SPIRES
+      outSpires << dynamics.time() << ';';
+      inSpires << dynamics.time() << ';';
+      for (const auto &[id, street] : dynamics.graph().streetSet()) {
+        if (street->isSpire()) {auto &spire = dynamic_cast<SpireStreet &>(*street);
+        outSpires << spire.outputCounts(false) << ';';
+        inSpires << spire.inputCounts(false) << ';';}
+        else {outSpires << 0 << ';';
+        inSpires << 0 << ';';}
+      }
+      outSpires << std::endl;
+      inSpires << std::endl;
 #endif
     }
         
