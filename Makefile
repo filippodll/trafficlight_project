@@ -10,4 +10,4 @@ viali:
 
 gifter:
 	clear
-	python ../dsf/utils/gifter.py --adj-matrix ./datas69_op/adj.dat --coordinates ./datas69_op/coords.csv --densities ./datas69_op/densities.csv
+	python ../dsf/utils/gifter.py --adj-matrix ./datas69_op/adj.dat --coordinates ./datas69_op/coords.csv --densities ./datas69_op/densities.csv --use-basemap 1
