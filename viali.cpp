@@ -12,7 +12,8 @@
 #include <atomic>
 namespace fs = std::filesystem;
 
-std::atomic_int progress{0};
+std::atomic<int> progress{0};
+std::atomic<bool> bExitFlag{false};
 
 // uncomment these lines to print densities, flows and speeds
 #define PRINT_DENSITIES
@@ -217,22 +218,8 @@ int main() {
     }
   }
 
-  auto const& nNodes = graph.nodeSet().size();
-  auto const& adj{graph.adjMatrix()};
-  std::ofstream adjFile(OUT_FOLDER + "adj.dat");
-  adjFile << nNodes << '\t' << nNodes << std::endl;
-  for (auto i{0}; i < nNodes; ++i) {
-    for (auto j{0}; j < nNodes; ++j) {
-      adjFile << adj(i, j);
-      if (j != nNodes - 1) {
-        adjFile << '\t';
-      }
-    }
-    adjFile << std::endl;
-  }
-  adjFile.close();
-
-  
+  graph.exportMatrix(OUT_FOLDER + "adj.dsm");
+  graph.exportCoordinates(OUT_FOLDER + "coords.csv");
 
   // print nodes and streets
   std::cout << "Nodes: " << graph.nodeSet().size() << '\n';
@@ -259,29 +246,19 @@ int main() {
   std::unordered_map<Unit, double> src{{0, 0.3}, {8, 0.27}, {9, 0.04}, {10, 0.01}, {11, 0.01}, {12, 0.01}, {13, 0.09}, {14, 0.06}, {16, 0.04}, {17, 0.1}, {18, 0.05}, {19, 0.01}, {20, 0.01}};
   std::unordered_map<Unit, double> dst{{0, 0.195}, {8, 0.22}, {9, 0.08}, {11, 0.02}, {13, 0.08}, {14, 0.08}, {15, 0.005}, {17, 0.08}, {18, 0.08}, {19, 0.16}};
 
-  // dynamics.addItinerary(Itinerary{0, 0});
-  // dynamics.addItinerary(Itinerary{1, 8});
-  // dynamics.addItinerary(Itinerary{2, 9});
-  // dynamics.addItinerary(Itinerary{3, 11});
-  // dynamics.addItinerary(Itinerary{4, 13});
-  // dynamics.addItinerary(Itinerary{5, 14});
-  // dynamics.addItinerary(Itinerary{6, 15});
-  // dynamics.addItinerary(Itinerary{7, 17});
-  // dynamics.addItinerary(Itinerary{8, 18});
-  // dynamics.addItinerary(Itinerary{9, 19});
   std::vector <Unit> itinerary{0, 8, 9, 11, 13, 14, 15, 17, 18, 19};
   dynamics.setDestinationNodes(itinerary);
 
   // auto &spire =
   //     dynamic_cast<SpireStreet &>(*dynamics.graph().streetSet().at(19));
 
-  // lauch progress bar
-  // std::thread t([]() {
-  //   while (progress < MAX_TIME) {
-  //     printLoadingBar(progress, MAX_TIME);
-  //     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-  //   }
-  // });
+  // launch progress bar
+  std::jthread t([]() {
+    while (progress < MAX_TIME && !bExitFlag) {
+      printLoadingBar(progress, MAX_TIME);
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+  });
   std::ofstream out(OUT_FOLDER + "data.csv");
   out << "time;n_agents;mean_speed;mean_speed_err;mean_density;mean_density_"
          "err;mean_flow;mean_flow_err;mean_traveltime;mean_traveltime_err;mean_flow_spires;mean_flow_spires_err\n";
@@ -345,13 +322,14 @@ int main() {
             dynamics.addAgentsRandomly(nAgents, src, dst);
           } catch (const std::exception &e) {
             std::cerr << e.what() << '\n';
-            for (auto const& [id, agent] : dynamics.agents()) {
-              //std::cout << "Agent ID " << id << " srcNodeID " << agent->srcNodeId().value() << " dstNodeID " << agent->itineraryId();
-              if (agent->streetId().has_value()) {
-                //std::cout << " streetID " << agent->streetId().value();
-              }
-              //std::cout << std::endl;
-            }
+            // for (auto const& [id, agent] : dynamics.agents()) {
+            //   //std::cout << "Agent ID " << id << " srcNodeID " << agent->srcNodeId().value() << " dstNodeID " << agent->itineraryId();
+            //   if (agent->streetId().has_value()) {
+            //     //std::cout << " streetID " << agent->streetId().value();
+            //   }
+            //   //std::cout << std::endl;
+            // }
+            bExitFlag = true;
             break;
           }
           
@@ -454,7 +432,6 @@ int main() {
   //   dynamics.evolve(false);
   //   ++progress;
   // }
-  // t.join();
 
   return 0;
 }
