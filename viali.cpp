@@ -264,7 +264,7 @@ int main() {
   //     dynamic_cast<SpireStreet &>(*dynamics.graph().streetSet().at(19));
 
   // launch progress bar
-  std::jthread t([]() {
+  std::thread t([]() {
     while (progress < MAX_TIME && !bExitFlag) {
       printLoadingBar(progress, MAX_TIME);
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -443,6 +443,7 @@ int main() {
   //   dynamics.evolve(false);
   //   ++progress;
   // }
+  t.join();
 
   return 0;
 }
