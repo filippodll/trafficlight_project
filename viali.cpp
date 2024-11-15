@@ -218,8 +218,19 @@ int main() {
     }
   }
 
-  graph.exportMatrix(OUT_FOLDER + "adj.dsm");
   graph.exportCoordinates(OUT_FOLDER + "coords.csv");
+
+  auto const& matrix{graph.adjMatrix()};
+  auto const n{matrix.getColDim()};
+  std::ofstream adj(OUT_FOLDER + "adj.dat");
+  adj << n << '\t' << n << '\n';
+  for (auto i = 0; i < n; ++i) {
+    for (auto j = 0; j < n; ++j) {
+      adj << matrix(i, j) << '\t';
+    }
+    adj << '\n';
+  }
+  adj.close();
 
   // print nodes and streets
   std::cout << "Nodes: " << graph.nodeSet().size() << '\n';
