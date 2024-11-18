@@ -6,8 +6,9 @@ simulation:
 viali: 
 	clear
 	cmake -B build -DCMAKE_BUILD_TYPE=Release && make -C build
-	./viali.out
+	./viali_real.out
 
 gifter:
 	clear
-	python ../dsf/utils/gifter.py --adj-matrix ./datas69_op/adj.dat --coordinates ./datas69_op/coords.csv --densities ./datas69_op/densities.csv --use-basemap 1
+	rm -r temp_img/*.png
+	python ../dsf/utils/gifter.py --adj-matrix ./2024-06-06/adj.dat --coordinates ./2024-06-06/coords.csv --densities ./2024-06-06/densities.csv --use-basemap 1 --n-frames 20 --time-begin 0 --day 2024-06-06
