@@ -12,9 +12,7 @@
 #include <unordered_map>
 #include <vector>
 #include <set>
-#include <numeric>
-#include <algorithm>
-
+#include <format>
 #include <atomic>
 #include <thread>
 namespace fs = std::filesystem;
@@ -22,9 +20,7 @@ namespace fs = std::filesystem;
 std::atomic<int> progress{0};
 std::atomic<bool> bExitFlag{false};
 
-constexpr int SEED{69};                            // seed for random number generator
 const std::string IN_COORDS{"./coordinates.dsm"};  // input coords file
-const std::string OUT_FOLDER{"./2023-05-25/"};     // output folder
 
 // Compatible with dsm 1.3.8
 
@@ -44,21 +40,39 @@ void printLoadingBar(int const i, int const n) {
   std::cout.flush();
 }
 
-constexpr size_t NDATAPOINTS{12 * 24};  // number of data points
+size_t constexpr MAX_TIME{86400};  // maximum time of simulation
 
-constexpr auto MAX_TIME{
-    static_cast<size_t>(NDATAPOINTS * 5 * 60)};        // maximum time of simulation
-typedef std::array<unsigned int, NDATAPOINTS> data_t;  // pire data type
+typedef std::vector<size_t> data_t;  // data type
 
-constexpr auto DATA_FOLDER{"./may23/2023-05-25.csv"};
-constexpr size_t DELAY{1};
+#ifdef __APPLE__
+typedef std::thread thread_t;
+#else
+typedef std::jthread thread_t;
+#endif
 
-int main() {
+int main(int argc, char* argv[]) {
+  if (argc != 6) {
+    std::cerr << "Usage: " << argv[0]
+              << " <SEED> <DAY> <GRANULARITY> <DELAY> <DATA_FOLDER>\n";
+    return 1;
+  }
+
+  int const SEED{std::stoi(argv[1])};     // seed for random number generator
+  std::string const DAY{argv[2]};         // day of the week
+  int const GRANULARITY{std::stoi(argv[3])};  // granularity of the data in seconds
+  int const DELAY{std::stoi(argv[4])};       // delay in granularity
+  std::string const DATA_FOLDER{argv[5]};   // folder containing the data files
+
+  std::string const INPUT_FILE{std::format("{}/{}.csv", DATA_FOLDER, DAY)};
+  std::string const OUT_FOLDER{std::format("./{}/", DAY)};
+
+  size_t const NDATAPOINTS{MAX_TIME / GRANULARITY};  // number of data points
+
   if (fs::exists(OUT_FOLDER)) {
     fs::remove_all(OUT_FOLDER);
   }
   fs::create_directory(OUT_FOLDER);
-  std::cout << "Using dsm version: " << dsm::version() << '\n';
+  std::cout << std::format("Using dsm version: {}\n", dsm::version());
 
   // Create the graph
 
@@ -349,9 +363,9 @@ int main() {
   auto const& streets{dynamics.graph().streetSet()};
 
   std::cout << "Importing input data" << std::endl;
-  std::ifstream ifs(DATA_FOLDER);
+  std::ifstream ifs(INPUT_FILE);
   if (!ifs) {
-    std::cerr << "Error opening file " << DATA_FOLDER << '\n';
+    std::cerr << "Error opening file " << INPUT_FILE << '\n';
     return 1;
   }
   std::string line;
@@ -367,15 +381,17 @@ int main() {
 
     std::getline(iss, token, ';');
     Unit streetId = coilmap.at(token);
-    iss.seekg(1, std::ios_base::cur);
+    // iss.seekg(1, std::ios_base::cur);
     if (inputCoils.contains(streetId)) {
       auto const nodeId{streets.at(streetId)->nodePair().first};
+      input_data[nodeId] = data_t(NDATAPOINTS, 0);
       for (auto i = 0; i < NDATAPOINTS - 1; ++i) {
         iss >> iValue;
         iValue > 0 ? input_data[nodeId][i] = iValue : input_data[nodeId][i] = 0;
       }
     } else if (outputCoils.contains(streetId)) {
       auto const nodeId{streets.at(streetId)->nodePair().second};
+      output_data[nodeId] = data_t(NDATAPOINTS, 0);
       for (auto i = 0; i < NDATAPOINTS - 1; ++i) {
         iss >> iValue;
         iValue > 0 ? output_data[nodeId][i] = iValue : output_data[nodeId][i] = 0;
@@ -398,7 +414,7 @@ int main() {
   std::cout << "Itineraries created" << std::endl;
 
   // launch progress bar
-  std::jthread t([]() {
+  thread_t t([]() {
     while (progress < MAX_TIME && !bExitFlag) {
       printLoadingBar(progress, MAX_TIME);
       std::this_thread::sleep_for(std::chrono::milliseconds(500));
@@ -408,16 +424,16 @@ int main() {
   out << "time;n_agents;mean_speed;mean_speed_err;mean_density;mean_density_"
          "err;mean_flow;mean_flow_err;mean_traveltime;mean_traveltime_err\n";
   std::ofstream streetDensity(OUT_FOLDER + "densities.csv");
-  streetDensity << "time;";
+  streetDensity << "time";
   for (const auto& [id, street] : dynamics.graph().streetSet()) {
-    streetDensity << id << ';';
+    streetDensity << ';' << id ;
   }
   streetDensity << std::endl;
 
   std::ofstream nodeDensity(OUT_FOLDER + "nodedensities.csv");
-  nodeDensity << "time;";
+  nodeDensity << "time";
   for (const auto& [id, node] : dynamics.graph().nodeSet()) {
-    nodeDensity << id << ';';
+    nodeDensity << ';' << id;
   }
   nodeDensity << std::endl;
 
@@ -543,6 +559,10 @@ int main() {
   streetDensity.close();
   nodeDensity.close();
   out.close();
+
+#ifdef __APPLE__
+  t.join();
+#endif
 
   return 0;
 }
