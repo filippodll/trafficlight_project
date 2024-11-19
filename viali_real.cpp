@@ -72,7 +72,12 @@ int main(int argc, char* argv[]) {
     fs::remove_all(OUT_FOLDER);
   }
   fs::create_directory(OUT_FOLDER);
+  if (fs::exists("./constants")) {
+    fs::remove_all("./constants");
+  }
+  fs::create_directory("./constants");
   std::cout << std::format("Using dsm version: {}\n", dsm::version());
+  std::cout << "Output folder: " << OUT_FOLDER << std::endl;
 
   // Create the graph
 
@@ -329,11 +334,11 @@ int main(int argc, char* argv[]) {
   graph.adjustNodeCapacities();
   graph.normalizeStreetCapacities();
 
-  graph.exportCoordinates(OUT_FOLDER + "coords.csv");
+  graph.exportCoordinates("./constants/coords.csv");
 
   auto const& matrix{graph.adjMatrix()};
   auto const n{matrix.getColDim()};
-  std::ofstream adj(OUT_FOLDER + "adj.dat");
+  std::ofstream adj("./constants/adj.dat");
   adj << n << '\t' << n << '\n';
   for (auto i = 0; i < n; ++i) {
     for (auto j = 0; j < n; ++j) {
@@ -358,7 +363,7 @@ int main(int argc, char* argv[]) {
   Dynamics dynamics{graph};
   dynamics.setSeed(SEED);
   dynamics.setMinSpeedRateo(0.95);
-  dynamics.setSpeedFluctuationSTD(0.2);
+  // dynamics.setSpeedFluctuationSTD(0.2);
 
   auto const& streets{dynamics.graph().streetSet()};
 
@@ -486,7 +491,15 @@ int main(int argc, char* argv[]) {
         }
       }
       ++current_index;
-      nAgents = nAgents < 10 ? 1 : nAgents /= 10;
+      if (srcProbabilities.empty()) {
+        std::cerr << "WARNING: No input data for time " << progress << std::endl;
+        nAgents = 0;
+      } else {
+        nAgents = nAgents < 10 ? 1 : nAgents /= 10;
+      }
+      if (dstProbabilities.empty()) {
+        std::cerr << "WARNING: No output data for time " << progress << std::endl;
+      }
     }
     // EVOLUTION   -   -   -
 
