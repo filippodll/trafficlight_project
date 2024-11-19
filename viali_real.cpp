@@ -11,6 +11,9 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <set>
+#include <numeric>
+#include <algorithm>
 
 #include <atomic>
 #include <thread>
@@ -21,7 +24,7 @@ std::atomic<bool> bExitFlag{false};
 
 constexpr int SEED{69};                            // seed for random number generator
 const std::string IN_COORDS{"./coordinates.dsm"};  // input coords file
-const std::string OUT_FOLDER{"./2024-06-06/"};     // output folder
+const std::string OUT_FOLDER{"./2023-05-25/"};     // output folder
 
 // Compatible with dsm 1.3.8
 
@@ -47,7 +50,8 @@ constexpr auto MAX_TIME{
     static_cast<size_t>(NDATAPOINTS * 5 * 60)};        // maximum time of simulation
 typedef std::array<unsigned int, NDATAPOINTS> data_t;  // pire data type
 
-constexpr auto DATA_FOLDER{"./june24/2024-06-06.csv"};
+constexpr auto DATA_FOLDER{"./may23/2023-05-25.csv"};
+constexpr size_t DELAY{1};
 
 int main() {
   if (fs::exists(OUT_FOLDER)) {
@@ -311,12 +315,6 @@ int main() {
   graph.adjustNodeCapacities();
   graph.normalizeStreetCapacities();
 
-  for (const auto& [id, street] : graph.streetSet()) {
-    if (!street->isSpire()) {
-      std::cout << "Street " << id << " is not a spire.\n";
-    }
-  }
-
   graph.exportCoordinates(OUT_FOLDER + "coords.csv");
 
   auto const& matrix{graph.adjMatrix()};
@@ -348,6 +346,8 @@ int main() {
   dynamics.setMinSpeedRateo(0.95);
   dynamics.setSpeedFluctuationSTD(0.2);
 
+  auto const& streets{dynamics.graph().streetSet()};
+
   std::cout << "Importing input data" << std::endl;
   std::ifstream ifs(DATA_FOLDER);
   if (!ifs) {
@@ -356,49 +356,49 @@ int main() {
   }
   std::string line;
   std::getline(ifs, line);  // skip header
-  std::map<Unit, data_t> data;
+  std::map<Unit, data_t> input_data;
+  std::map<Unit, data_t> output_data;
   int iValue;
-  std::set<Unit> inputCoils{1, 176, 190, 233, 254, 276, 297, 341, 363, 384, 427};
-  std::unordered_map<Unit, double> outputCoils{{21, 0.}, {30, 0.}, {76, 0.}, {155, 0.}, {166, 0.}};
+  std::set<Unit> inputCoils{1, 175, 190, 233, 254, 276, 297, 341, 363, 384, 427};
+  std::set<Unit> outputCoils{21, 30, 76, 155, 166};
   while (std::getline(ifs, line)) {
     std::istringstream iss(line);
     std::string token;
 
     std::getline(iss, token, ';');
-    Unit id = coilmap.at(token);
+    Unit streetId = coilmap.at(token);
     iss.seekg(1, std::ios_base::cur);
-    if (!inputCoils.contains(id)) {
-      if (outputCoils.contains(id)) {
-        for (auto i = 0; i < 12 * 24 - 1; ++i) {
-          iss >> iValue;
-          if (iValue > 0) {
-            outputCoils[id] += iValue;
-          }
-        }
+    if (inputCoils.contains(streetId)) {
+      auto const nodeId{streets.at(streetId)->nodePair().first};
+      for (auto i = 0; i < NDATAPOINTS - 1; ++i) {
+        iss >> iValue;
+        iValue > 0 ? input_data[nodeId][i] = iValue : input_data[nodeId][i] = 0;
       }
-    }
-    // move pointer one char next
-    for (auto i = 0; i < 12 * 24 - 1; ++i) {
-      iss >> iValue;
-      iValue > 0 ? data[id][i] = iValue : data[id][i] = 0;
+    } else if (outputCoils.contains(streetId)) {
+      auto const nodeId{streets.at(streetId)->nodePair().second};
+      for (auto i = 0; i < NDATAPOINTS - 1; ++i) {
+        iss >> iValue;
+        iValue > 0 ? output_data[nodeId][i] = iValue : output_data[nodeId][i] = 0;
+      }
     }
   }
   ifs.close();
 
-  double sum = 0.;
-  for (auto const& [id, value] : outputCoils) {
-    sum += value;
+  std::cout << "Input data imported" << std::endl;
+  std::cout << "Creating itineraries" << std::endl;
+
+  // create a vector from 0 to 20
+  std::vector<Unit> outNodeList;
+  outNodeList.reserve(output_data.size());
+  for (const auto& [id, _] : output_data) {
+    outNodeList.push_back(id);
   }
-  auto const& streets{dynamics.graph().streetSet()};
-  std::vector<Unit> itineraries;
-  for (auto& [id, value] : outputCoils) {
-    itineraries.emplace_back(streets.at(id)->nodePair().second);
-    value /= sum;
-  }
-  dynamics.setDestinationNodes(itineraries);
+  dynamics.setDestinationNodes(outNodeList);
+
+  std::cout << "Itineraries created" << std::endl;
 
   // launch progress bar
-  std::thread t([]() {
+  std::jthread t([]() {
     while (progress < MAX_TIME && !bExitFlag) {
       printLoadingBar(progress, MAX_TIME);
       std::this_thread::sleep_for(std::chrono::milliseconds(500));
@@ -428,45 +428,71 @@ int main() {
   }
   outSpires << std::endl;
 
-  size_t current_index = 0;
-  // create a uniform distribution in 0. 1.
-  std::uniform_real_distribution<double> dstdist(0., 1.);
-  std::mt19937_64 gen{std::random_device{}()};
-  Unit srcNode, dstNode;
-  double dRandom;
+  size_t current_index{0};
+  dsm::Size nAgents{0};
+
+  std::map<Unit, double> srcProbabilities, dstProbabilities;
 
   while (progress < MAX_TIME) {
+    if (progress % 300 == 0 && current_index < NDATAPOINTS - 1) {
+      srcProbabilities.clear();
+      dstProbabilities.clear();
+      double sum = 0.;
+      size_t const idx_in{current_index};
+      size_t const idx_out{(current_index + 1) % NDATAPOINTS};
+      for (auto const& [id, data] : input_data) {
+        srcProbabilities[id] = data[idx_in];
+        sum += data[idx_in];
+      }
+      nAgents = static_cast<dsm::Size>(sum);
+      if (sum > 1) {
+        for (auto& [id, count] : srcProbabilities) {
+          count /= sum;
+        }
+      } else {
+        auto const size = input_data.size();
+        for (auto const& [id, _] : input_data) {
+          srcProbabilities[id] = 1. / size;
+        }
+      }
+      sum = 0.;
+      for (auto const& [id, data] : output_data) {
+        dstProbabilities[id] = data[idx_out];
+        sum += data[idx_out];
+      }
+      if (sum > 1) {
+        for (auto& [id, count] : dstProbabilities) {
+          count /= sum;
+        }
+      } else {
+        auto const size = output_data.size();
+        for (auto const& [id, _] : output_data) {
+          dstProbabilities[id] = 1. / size;
+        }
+      }
+      ++current_index;
+      nAgents = nAgents < 10 ? 1 : nAgents /= 10;
+    }
     // EVOLUTION   -   -   -
 
     if (progress % 30 == 0) {
       try {
-        for (auto const& [streetId, values] : data) {
-          for (auto i = 0; i < values[current_index] / 20; ++i) {
-            srcNode = streets.at(streetId)->nodePair().first;
-            dstNode = srcNode;
-            while (dstNode == srcNode) {
-              dRandom = dstdist(gen);
-              for (auto const& [id, prob] : outputCoils) {
-                if (dRandom < prob) {
-                  dstNode = streets.at(id)->nodePair().second;
-                  break;
-                }
-              }
-            }
-            dynamics.addAgent(srcNode, dstNode);
-          }
-        }
+        dynamics.addAgentsRandomly(nAgents, srcProbabilities, dstProbabilities);
       } catch (const std::exception& e) {
         std::cerr << e.what() << '\n';
+        for (auto const& [id, agent] : dynamics.agents()) {
+          std::cout << "Agent ID " << id << " srcNodeID " << agent->srcNodeId().value()
+                    << " dstNodeID " << agent->itineraryId();
+          if (agent->streetId().has_value()) {
+            std::cout << " streetID " << agent->streetId().value();
+          }
+          std::cout << std::endl;
+        }
         bExitFlag = true;
         break;
       }
     }
     dynamics.evolve(false);
-
-    if (progress % 300 == 0) {
-      ++current_index;
-    }
 
     // OUTPUTS   -   -   -
 
@@ -482,11 +508,11 @@ int main() {
           << ';' << meanTravelTime.std << std::endl;
     }
     if (dynamics.time() % 300 == 0) {
-      outSpires << dynamics.time() << ';';
+      outSpires << dynamics.time();
       for (const auto& [id, street] : dynamics.graph().streetSet()) {
         if (street->isSpire()) {
           auto& spire = dynamic_cast<SpireStreet&>(*street);
-          outSpires << spire.outputCounts(true) << ';';
+          outSpires << ';' << spire.outputCounts(true);
         } else {
           outSpires << ';';
         }
@@ -495,14 +521,14 @@ int main() {
     }
 
     if (dynamics.time() % 10 == 0) {
-      streetDensity << dynamics.time() << ';';
+      streetDensity << dynamics.time();
       for (const auto& [id, street] : dynamics.graph().streetSet()) {
-        streetDensity << street->density(true) << ';';
+        streetDensity << ';' << street->density(true);
       }
       streetDensity << std::endl;
-      nodeDensity << dynamics.time() << ';';
+      nodeDensity << dynamics.time();
       for (const auto& [id, node] : dynamics.graph().nodeSet()) {
-        nodeDensity << node->density() << ';';
+        nodeDensity << ';' << node->density();
       }
       nodeDensity << std::endl;
     }
@@ -510,12 +536,13 @@ int main() {
     ++progress;
   }
 
+  std::cout << "There are still " << dynamics.agents().size() << " agents in the system."
+            << std::endl;
+
   outSpires.close();
   streetDensity.close();
   nodeDensity.close();
   out.close();
-  
-  t.join();
 
   return 0;
 }
