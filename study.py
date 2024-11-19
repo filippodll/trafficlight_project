@@ -17,7 +17,6 @@ if __name__ == "__main__":
 
     df_real = pd.read_csv(f"{args.input_folder}/{args.day}.csv", sep=";")
     df_synth = pd.read_csv(f"./{args.day}/out_spires.csv", sep=";")
-    df_data = pd.read_csv(f"./{args.day}/data.csv", sep=";")
 
     OUTPUT_COILS = [21, 30, 76, 155, 166]
     INPUT_COILS = [1, 175, 190, 211, 233, 254, 276, 297, 341, 363, 384, 427]
@@ -93,11 +92,24 @@ if __name__ == "__main__":
     plt.legend()
     plt.show()
 
-    plt.plot(mean_diff, label="Mean difference")
-    plt.show()
-
-    # # plot mean_traveltime over mean_density for df_data
-    # plt.scatter(df_data["mean_density"], df_data["mean_traveltime"], label="Real data")
-    # plt.xlabel("Mean density")
-    # plt.ylabel("Mean travel time")
+    # plt.plot(mean_diff, label="Mean difference")
     # plt.show()
+
+    df_data = pd.read_csv(f"./{args.day}/data.csv", sep=";")
+    # if exists ./{args.day}-optimized/data.csv import it
+    df_opt = None
+    try:
+        df_opt = pd.read_csv(f"./{args.day}-optimized/data.csv", sep=";")
+    except FileNotFoundError:
+        pass
+
+    # plot mean_traveltime over mean_density for df_data
+    plt.scatter(df_data["mean_density"], df_data["mean_traveltime"], label="Normal")
+    if df_opt is not None:
+        plt.scatter(
+            df_opt["mean_density"], df_opt["mean_traveltime"], label="Optimized"
+        )
+    plt.xlabel("Mean density")
+    plt.ylabel("Mean travel time")
+    plt.legend()
+    plt.show()

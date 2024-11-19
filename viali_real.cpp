@@ -41,6 +41,7 @@ void printLoadingBar(int const i, int const n) {
 }
 
 size_t constexpr MAX_TIME{86400};  // maximum time of simulation
+size_t constexpr INTERVAL_AGENTS_IN{30};
 
 typedef std::vector<size_t> data_t;  // data type
 
@@ -51,20 +52,26 @@ typedef std::jthread thread_t;
 #endif
 
 int main(int argc, char* argv[]) {
-  if (argc != 6) {
+  if (argc != 7) {
     std::cerr << "Usage: " << argv[0]
-              << " <SEED> <DAY> <GRANULARITY> <DELAY> <DATA_FOLDER>\n";
+              << " <SEED> <DAY> <GRANULARITY> <DELAY> <DATA_FOLDER> <OPTIMIZE>\n";
     return 1;
   }
 
-  int const SEED{std::stoi(argv[1])};         // seed for random number generator
-  std::string const DAY{argv[2]};             // day of the week
-  int const GRANULARITY{std::stoi(argv[3])};  // granularity of the data in seconds
-  int const DELAY{std::stoi(argv[4])};        // delay in granularity
-  std::string const DATA_FOLDER{argv[5]};     // folder containing the data files
+  int const SEED{std::stoi(argv[1])};           // seed for random number generator
+  std::string const DAY{argv[2]};               // day of the week
+  int const GRANULARITY{std::stoi(argv[3])};    // granularity of the data in seconds
+  int const DELAY{std::stoi(argv[4])};          // delay in granularity
+  std::string const DATA_FOLDER{argv[5]};       // folder containing the data files
+  bool const OPTIMIZE{std::stoi(argv[6]) > 0};  // optimize the graph
 
   std::string const INPUT_FILE{std::format("{}/{}.csv", DATA_FOLDER, DAY)};
-  std::string const OUT_FOLDER{std::format("./{}/", DAY)};
+  std::string OUT_FOLDER{std::format("./{}", DAY)};
+  if (OPTIMIZE) {
+    OUT_FOLDER += "-optimized/";
+  } else {
+    OUT_FOLDER += '/';
+  }
 
   size_t const NDATAPOINTS{MAX_TIME / GRANULARITY};  // number of data points
 
@@ -363,6 +370,9 @@ int main(int argc, char* argv[]) {
   Dynamics dynamics{graph};
   dynamics.setSeed(SEED);
   dynamics.setMinSpeedRateo(0.95);
+  if (OPTIMIZE) {
+    dynamics.setDataUpdatePeriod(INTERVAL_AGENTS_IN);
+  }
   // dynamics.setSpeedFluctuationSTD(0.2);
 
   auto const& streets{dynamics.graph().streetSet()};
@@ -454,7 +464,7 @@ int main(int argc, char* argv[]) {
   std::map<Unit, double> srcProbabilities, dstProbabilities;
 
   while (progress < MAX_TIME) {
-    if (progress % 300 == 0 && current_index < NDATAPOINTS - 1) {
+    if (progress % GRANULARITY == 0) {
       srcProbabilities.clear();
       dstProbabilities.clear();
       double sum = 0.;
@@ -503,7 +513,7 @@ int main(int argc, char* argv[]) {
     }
     // EVOLUTION   -   -   -
 
-    if (progress % 30 == 0) {
+    if (progress % INTERVAL_AGENTS_IN == 0) {
       try {
         dynamics.addAgentsRandomly(nAgents, srcProbabilities, dstProbabilities);
       } catch (const std::exception& e) {
@@ -522,9 +532,13 @@ int main(int argc, char* argv[]) {
     }
     dynamics.evolve(false);
 
+    if (dynamics.time() % GRANULARITY == 0) {
+      dynamics.optimizeTrafficLights(10, 0.1, 3. / 10);
+    }
+
     // OUTPUTS   -   -   -
 
-    if (dynamics.time() % 30 == 0) {
+    if (dynamics.time() % GRANULARITY == 0) {
       const auto& meanSpeed{dynamics.streetMeanSpeed()};
       const auto& meanDensity{dynamics.streetMeanDensity(true)};
       const auto& meanFlow{dynamics.streetMeanFlow()};
@@ -535,7 +549,7 @@ int main(int argc, char* argv[]) {
           << ';' << meanFlow.mean << ';' << meanFlow.std << ';' << meanTravelTime.mean
           << ';' << meanTravelTime.std << std::endl;
     }
-    if (dynamics.time() % 300 == 0) {
+    if (dynamics.time() % GRANULARITY == 0) {
       outSpires << dynamics.time();
       for (const auto& [id, street] : dynamics.graph().streetSet()) {
         if (street->isSpire()) {
@@ -548,7 +562,7 @@ int main(int argc, char* argv[]) {
       outSpires << std::endl;
     }
 
-    if (dynamics.time() % 10 == 0) {
+    if (dynamics.time() % GRANULARITY == 0) {
       streetDensity << dynamics.time();
       for (const auto& [id, street] : dynamics.graph().streetSet()) {
         streetDensity << ';' << street->density(true);
