@@ -57,11 +57,11 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  int const SEED{std::stoi(argv[1])};     // seed for random number generator
-  std::string const DAY{argv[2]};         // day of the week
+  int const SEED{std::stoi(argv[1])};         // seed for random number generator
+  std::string const DAY{argv[2]};             // day of the week
   int const GRANULARITY{std::stoi(argv[3])};  // granularity of the data in seconds
-  int const DELAY{std::stoi(argv[4])};       // delay in granularity
-  std::string const DATA_FOLDER{argv[5]};   // folder containing the data files
+  int const DELAY{std::stoi(argv[4])};        // delay in granularity
+  std::string const DATA_FOLDER{argv[5]};     // folder containing the data files
 
   std::string const INPUT_FILE{std::format("{}/{}.csv", DATA_FOLDER, DAY)};
   std::string const OUT_FOLDER{std::format("./{}/", DAY)};
@@ -99,7 +99,7 @@ int main(int argc, char* argv[]) {
   Street s4_3{
       8, 1, 237., 13.9, std::make_pair(4, 3), 3, "4.45 4.46 8 1"};  // (815) 4.45 4.46 8 1
   Street s3_5{
-      9, 1, 375., 13.9, std::make_pair(3, 5), 3, "4.45 4.46 8 1"};  // (815) 4.45 4.46 8 1
+      9, 1, 375., 13.9, std::make_pair(3, 5), 3, "4.46 4.45 4 1"};  // (818) 4.46 4.45 4 1
 
   Street s5_4{10, 1, 135., 13.9, std::make_pair(5, 4), 3};
 
@@ -381,7 +381,6 @@ int main(int argc, char* argv[]) {
 
     std::getline(iss, token, ';');
     Unit streetId = coilmap.at(token);
-    // iss.seekg(1, std::ios_base::cur);
     if (inputCoils.contains(streetId)) {
       auto const nodeId{streets.at(streetId)->nodePair().first};
       input_data[nodeId] = data_t(NDATAPOINTS, 0);
@@ -426,7 +425,7 @@ int main(int argc, char* argv[]) {
   std::ofstream streetDensity(OUT_FOLDER + "densities.csv");
   streetDensity << "time";
   for (const auto& [id, street] : dynamics.graph().streetSet()) {
-    streetDensity << ';' << id ;
+    streetDensity << ';' << id;
   }
   streetDensity << std::endl;
 
