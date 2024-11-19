@@ -344,15 +344,15 @@ int main(int argc, char* argv[]) {
   adj.close();
 
   std::unordered_map<std::string_view, Unit> coilmap;
-  std::ofstream dict("./dict.txt");
-  dict << "{ ";
+  std::ofstream dict("./structures_out.py");
+  dict << "COIL_DICT = {\n";
   for (auto const& [id, street] : graph.streetSet()) {
     if (street->isSpire()) {
-      dict << '\"' << street->name() << "\": " << id << ", ";  // Python dictionary
+      dict << '\"' << street->name() << "\": " << id << ",\n";  // Python dictionary
       coilmap[street->name()] = id;
     }
   }
-  dict << " }";
+  dict << "}\n";
   dict.close();
   // Create the dynamics
   Dynamics dynamics{graph};
