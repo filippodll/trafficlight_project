@@ -12,6 +12,6 @@ gifter:
 	curl ascii.live/rick
 video:
 	clear
-	python ../dsf/utils/videomaker.py --densities ./2023-05-12/densities.csv --day 2023-05-12 --use-basemap 1 --adj-matrix ./constants/adj.dat --coordinates ./constants/coords.csv
+	python ../DynamicalSystemFramework/utils/videomaker.py --densities ./2023-05-12/densities.csv --day 2023-05-12 --use-basemap 1 --adj-matrix ./constants/adj.dat --coordinates ./constants/coords.csv
 study:
 	python study.py --day 2023-05-25 --n-nodes 21 --input-folder ./may23
