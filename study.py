@@ -65,11 +65,12 @@ if __name__ == "__main__":
                 else:
                     mean_diff += diff
                 df_diff[str(idx)] = diff
+                # diff = diff * 65 / 25
                 diff = diff / data_real
                 # limit x after 8 am, every point are 5 minutes
                 # mobile mean every 12 points
-                diff = diff[8 * 12 :]
-                diff = np.convolve(diff, np.ones((12,)) / 12, mode="valid")
+                # diff = diff[8 * 12 :]
+                # diff = np.convolve(diff, np.ones((12,)) / 12, mode="valid")
                 plt.plot(
                     diff, label=f"Coil {idx // args.n_nodes} -> {idx % args.n_nodes}"
                 )
@@ -104,12 +105,12 @@ if __name__ == "__main__":
         pass
 
     # plot mean_traveltime over mean_density for df_data
-    plt.scatter(df_data["mean_density"], df_data["mean_traveltime"], label="Normal")
-    if df_opt is not None:
-        plt.scatter(
-            df_opt["mean_density"], df_opt["mean_traveltime"], label="Optimized"
-        )
-    plt.xlabel("Mean density")
-    plt.ylabel("Mean travel time")
-    plt.legend()
-    plt.show()
+    # plt.scatter(df_data["mean_density"], df_data["mean_traveltime"], label="Normal")
+    # if df_opt is not None:
+    #     plt.scatter(
+    #         df_opt["mean_density"], df_opt["mean_traveltime"], label="Optimized"
+    #     )
+    # plt.xlabel("Mean density")
+    # plt.ylabel("Mean travel time")
+    # plt.legend()
+    # plt.show()

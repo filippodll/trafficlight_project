@@ -65,6 +65,8 @@ int main(int argc, char* argv[]) {
   std::string const DATA_FOLDER{argv[5]};       // folder containing the data files
   bool const OPTIMIZE{std::stoi(argv[6]) > 0};  // optimize the graph
 
+  auto const pConsoleLogger = spdlog::stdout_color_mt("main");
+
   std::string const INPUT_FILE{std::format("{}/{}.csv", DATA_FOLDER, DAY)};
   std::string OUT_FOLDER{std::format("./{}", DAY)};
   if (OPTIMIZE) {
@@ -83,8 +85,8 @@ int main(int argc, char* argv[]) {
     fs::remove_all("./constants");
   }
   fs::create_directory("./constants");
-  std::cout << std::format("Using dsm version: {}\n", dsm::version());
-  std::cout << "Output folder: " << OUT_FOLDER << std::endl;
+  pConsoleLogger->info("Using dsm version: {}", dsm::version());
+  pConsoleLogger->info("Output folder: {}", OUT_FOLDER);
 
   // Create the graph
 
@@ -377,7 +379,7 @@ int main(int argc, char* argv[]) {
 
   auto const& streets{dynamics.graph().streetSet()};
 
-  std::cout << "Importing input data" << std::endl;
+  pConsoleLogger->info("Importing input data...");
   std::ifstream ifs(INPUT_FILE);
   if (!ifs) {
     std::cerr << "Error opening file " << INPUT_FILE << '\n';
@@ -414,8 +416,8 @@ int main(int argc, char* argv[]) {
   }
   ifs.close();
 
-  std::cout << "Input data imported" << std::endl;
-  std::cout << "Creating itineraries" << std::endl;
+  pConsoleLogger->info("Input data imported");
+  pConsoleLogger->info("Creating itineraries");
 
   // create a vector from 0 to 20
   std::vector<Unit> outNodeList;
@@ -425,7 +427,7 @@ int main(int argc, char* argv[]) {
   }
   dynamics.setDestinationNodes(outNodeList);
 
-  std::cout << "Itineraries created" << std::endl;
+  pConsoleLogger->info("Destination nodes set");
 
   // launch progress bar
   thread_t t([]() {
@@ -502,13 +504,13 @@ int main(int argc, char* argv[]) {
       }
       ++current_index;
       if (srcProbabilities.empty()) {
-        std::cerr << "WARNING: No input data for time " << progress << std::endl;
+        pConsoleLogger->warn("No input data for time {}", dynamics.time());
         nAgents = 0;
       } else {
         nAgents = nAgents < 10 ? 1 : nAgents /= 10;
       }
       if (dstProbabilities.empty()) {
-        std::cerr << "WARNING: No output data for time " << progress << std::endl;
+        pConsoleLogger->warn("No output data for time {}", dynamics.time());
       }
     }
     // EVOLUTION   -   -   -
