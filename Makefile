@@ -5,8 +5,14 @@ simulation:
 
 viali: 
 	clear
-	cmake -B build -DCMAKE_BUILD_TYPE=Release && make -C build
-	./viali_real.out 69 2023-05-25 300 1 ./may23 1
+	cmake --preset=release
+	cmake --build build
+	./viali_real.out 69 2023-05-25 300 1 ./may23 0
+viali_debug: 
+	clear
+	cmake --preset=debug
+	cmake --build build
+	./viali_real.out 69 2023-05-12 300 1 ./may23 0
 gifter:
 	clear
 	curl ascii.live/rick

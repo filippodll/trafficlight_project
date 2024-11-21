@@ -17,7 +17,7 @@
 #include <thread>
 namespace fs = std::filesystem;
 
-std::atomic<int> progress{0};
+std::atomic<size_t> progress{0};
 std::atomic<bool> bExitFlag{false};
 
 const std::string IN_COORDS{"./coordinates.dsm"};  // input coords file
@@ -66,6 +66,9 @@ int main(int argc, char* argv[]) {
   bool const OPTIMIZE{std::stoi(argv[6]) > 0};  // optimize the graph
 
   auto const pConsoleLogger = spdlog::stdout_color_mt("main");
+#ifndef NDEBUG
+  pConsoleLogger->set_level(spdlog::level::debug);
+#endif
 
   std::string const INPUT_FILE{std::format("{}/{}.csv", DATA_FOLDER, DAY)};
   std::string OUT_FOLDER{std::format("./{}", DAY)};
@@ -349,8 +352,8 @@ int main(int argc, char* argv[]) {
   auto const n{matrix.getColDim()};
   std::ofstream adj("./constants/adj.dat");
   adj << n << '\t' << n << '\n';
-  for (auto i = 0; i < n; ++i) {
-    for (auto j = 0; j < n; ++j) {
+  for (unsigned int i = 0; i < n; ++i) {
+    for (unsigned int j = 0; j < n; ++j) {
       adj << matrix(i, j) << '\t';
     }
     adj << '\n';
@@ -401,14 +404,14 @@ int main(int argc, char* argv[]) {
     if (inputCoils.contains(streetId)) {
       auto const nodeId{streets.at(streetId)->nodePair().first};
       input_data[nodeId] = data_t(NDATAPOINTS, 0);
-      for (auto i = 0; i < NDATAPOINTS - 1; ++i) {
+      for (size_t i = 0; i < NDATAPOINTS - 1; ++i) {
         iss >> iValue;
         iValue > 0 ? input_data[nodeId][i] = iValue : input_data[nodeId][i] = 0;
       }
     } else if (outputCoils.contains(streetId)) {
       auto const nodeId{streets.at(streetId)->nodePair().second};
       output_data[nodeId] = data_t(NDATAPOINTS, 0);
-      for (auto i = 0; i < NDATAPOINTS - 1; ++i) {
+      for (size_t i = 0; i < NDATAPOINTS - 1; ++i) {
         iss >> iValue;
         iValue > 0 ? output_data[nodeId][i] = iValue : output_data[nodeId][i] = 0;
       }
@@ -469,17 +472,44 @@ int main(int argc, char* argv[]) {
     if (progress % GRANULARITY == 0) {
       srcProbabilities.clear();
       dstProbabilities.clear();
-      double sum = 0.;
       size_t const idx_in{current_index};
-      size_t const idx_out{(current_index + 1) % NDATAPOINTS};
+      size_t const idx_out{(current_index + DELAY) % NDATAPOINTS};
       for (auto const& [id, data] : input_data) {
         srcProbabilities[id] = data[idx_in];
-        sum += data[idx_in];
       }
-      nAgents = static_cast<dsm::Size>(sum);
-      if (sum > 1) {
+      // Erase nodes with no data
+      std::erase_if(srcProbabilities, [](const auto& pair) { return pair.second == 0.; });
+      for (auto const& [id, data] : output_data) {
+        dstProbabilities[id] = data[idx_out];
+      }
+      // Erase nodes with no data
+      std::erase_if(dstProbabilities, [](const auto& pair) { return pair.second == 0.; });
+      if (dstProbabilities.size() == 1) {
+        auto const [id, count] = *dstProbabilities.begin();
+        if (srcProbabilities.contains(id)) {
+          srcProbabilities.erase(id);
+        }
+      }
+      if (srcProbabilities.size() == 1) {
+        auto const [id, count] = *srcProbabilities.begin();
+        if (dstProbabilities.contains(id)) {
+          dstProbabilities.erase(id);
+        }
+      }
+      double inputSum{std::accumulate(
+          srcProbabilities.begin(),
+          srcProbabilities.end(),
+          0.,
+          [](double acc, const auto& pair) { return acc + pair.second; })};
+      nAgents = static_cast<dsm::Size>(inputSum);
+      double outputSum{std::accumulate(
+          dstProbabilities.begin(),
+          dstProbabilities.end(),
+          0.,
+          [](double acc, const auto& pair) { return acc + pair.second; })};
+      if (inputSum > 0) {
         for (auto& [id, count] : srcProbabilities) {
-          count /= sum;
+          count /= inputSum;
         }
       } else {
         auto const size = input_data.size();
@@ -487,27 +517,27 @@ int main(int argc, char* argv[]) {
           srcProbabilities[id] = 1. / size;
         }
       }
-      sum = 0.;
-      for (auto const& [id, data] : output_data) {
-        dstProbabilities[id] = data[idx_out];
-        sum += data[idx_out];
-      }
-      if (sum > 1) {
+      if (outputSum > 0) {
         for (auto& [id, count] : dstProbabilities) {
-          count /= sum;
+          count /= outputSum;
         }
       } else {
         auto const size = output_data.size();
         for (auto const& [id, _] : output_data) {
           dstProbabilities[id] = 1. / size;
         }
+        pConsoleLogger->warn("No output data for time {}, using uniform distribution.",
+                             dynamics.time());
       }
       ++current_index;
       if (srcProbabilities.empty()) {
         pConsoleLogger->warn("No input data for time {}", dynamics.time());
         nAgents = 0;
       } else {
-        nAgents = nAgents < 10 ? 1 : nAgents /= 10;
+        auto const oldValue = nAgents;
+        nAgents /= nAgents < 10 ? 1 : 10;
+        pConsoleLogger->info(
+            "Time: {}, nAgents: {} -> {}", dynamics.time(), oldValue, nAgents);
       }
       if (dstProbabilities.empty()) {
         pConsoleLogger->warn("No output data for time {}", dynamics.time());
@@ -519,22 +549,22 @@ int main(int argc, char* argv[]) {
       try {
         dynamics.addAgentsRandomly(nAgents, srcProbabilities, dstProbabilities);
       } catch (const std::exception& e) {
-        std::cerr << e.what() << '\n';
-        for (auto const& [id, agent] : dynamics.agents()) {
-          std::cout << "Agent ID " << id << " srcNodeID " << agent->srcNodeId().value()
-                    << " dstNodeID " << agent->itineraryId();
-          if (agent->streetId().has_value()) {
-            std::cout << " streetID " << agent->streetId().value();
-          }
-          std::cout << std::endl;
-        }
+        pConsoleLogger->error("Error adding agents: {}", e.what());
+        // for (auto const& [id, agent] : dynamics.agents()) {
+        //   std::cout << "Agent ID " << id << " srcNodeID " << agent->srcNodeId().value()
+        //             << " dstNodeID " << agent->itineraryId();
+        //   if (agent->streetId().has_value()) {
+        //     std::cout << " streetID " << agent->streetId().value();
+        //   }
+        //   std::cout << std::endl;
+        // }
         bExitFlag = true;
         break;
       }
     }
     dynamics.evolve(false);
 
-    if (dynamics.time() % GRANULARITY == 0) {
+    if (dynamics.time() % GRANULARITY == 0 && OPTIMIZE) {
       dynamics.optimizeTrafficLights(10, 0.1, 3. / 10);
     }
 
@@ -580,8 +610,8 @@ int main(int argc, char* argv[]) {
     ++progress;
   }
 
-  std::cout << "There are still " << dynamics.agents().size() << " agents in the system."
-            << std::endl;
+  // std::cout << "There are still " << dynamics.agents().size() << " agents in the system."
+  //           << std::endl;
 
   outSpires.close();
   streetDensity.close();
