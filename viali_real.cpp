@@ -409,20 +409,32 @@ int main(int argc, char* argv[]) {
       input_data[nodeId] = data_t(NDATAPOINTS, 0);
       for (size_t i = 0; i < NDATAPOINTS - 1; ++i) {
         iss >> iValue;
-        iValue > 0 ? input_data[nodeId][i] = iValue : input_data[nodeId][i] = 0;
+        if (iValue > 0) {
+          input_data[nodeId][i] = iValue;
+        } else {
+          input_data[nodeId][i] = 0;
+        }
       }
     } else if (outputCoils.contains(streetId)) {
       auto const nodeId{streets.at(streetId)->nodePair().second};
       output_data[nodeId] = data_t(NDATAPOINTS, 0);
       for (size_t i = 0; i < NDATAPOINTS - 1; ++i) {
         iss >> iValue;
-        iValue > 0 ? output_data[nodeId][i] = iValue : output_data[nodeId][i] = 0;
+        if (iValue > 0) {
+          output_data[nodeId][i] = iValue;
+        } else {
+          output_data[nodeId][i] = 0;
+        }
       }
     } else if (innerCoils.contains(streetId)) {
       inner_data[streetId] = data_t(NDATAPOINTS, 0);
       for (size_t i = 0; i < NDATAPOINTS - 1; ++i) {
         iss >> iValue;
-        iValue > 0 ? inner_data[streetId][i] = iValue : inner_data[streetId][i] = 0;
+        if (iValue > 0) {
+          inner_data[streetId][i] = iValue;
+        } else {
+          inner_data[streetId][i] = 0;
+        }
       }
     }
   }
@@ -497,12 +509,14 @@ int main(int argc, char* argv[]) {
       }
       // Balance every node input
       for (auto const& [nodeId, node] : dynamics.graph().nodeSet()) {
-        double inputCounts{0.};
-        double outputCounts{0.};
+        auto const& inputRoads{adjMatrix.getCol(nodeId, true)};
+        auto const& outputRoads{adjMatrix.getRow(nodeId, true)};
+        int inputCounts{0};
+        int outputCounts{0};
         std::set<dsm::Id> missingInput;
         std::set<dsm::Id> missingOutput;
         // Input roads
-        for (auto const& [inputStreetId, _] : adjMatrix.getCol(nodeId, true)) {
+        for (auto const& [inputStreetId, _] : inputRoads) {
           auto const id = streets.at(inputStreetId)->nodePair().first;
           if (srcProbabilities.contains(id)) {
             inputCounts += srcProbabilities[id];
@@ -513,7 +527,7 @@ int main(int argc, char* argv[]) {
           }
         }
         // Output roads
-        for (auto const& [outputStreetId, _] : adjMatrix.getRow(nodeId, true)) {
+        for (auto const& [outputStreetId, _] : outputRoads) {
           auto const id = streets.at(outputStreetId)->nodePair().second;
           if (dstProbabilities.contains(id)) {
             outputCounts += dstProbabilities[id];
@@ -523,86 +537,203 @@ int main(int argc, char* argv[]) {
             missingOutput.emplace(id);
           }
         }
-        double delta{std::ceil(inputCounts - outputCounts)};
-        if (delta == 0) {
+        auto const deltaTOT{inputCounts - outputCounts};
+        if (deltaTOT == 0) {
           continue;
         } else {
-          pConsoleLogger->info(
+          pConsoleLogger->debug(
               "Node {} has an overall delta of {}. Missing {} inputs and {} outputs.",
               nodeId,
-              delta,
+              deltaTOT,
               missingInput.size(),
               missingOutput.size());
         }
+
+        // Init rebalancing
         if (!missingInput.empty() && !missingOutput.empty()) {
-          pConsoleLogger->error("Node with id {} is missing {} inputs and {} outputs.",
-                                nodeId,
-                                missingInput.size(),
-                                missingOutput.size());
-          delta /= (missingInput.size() + missingOutput.size());
-          for (auto& [id, weight] : srcProbabilities) {
-            if (missingInput.contains(id)) {
-              if (weight - delta > 0) {
-                weight -= delta;
-              } else {
-                weight = 0.;
-              }
+          double existingSum = 0.;
+          for (auto const& [inputStreetId, _] : inputRoads) {
+            auto const id = streets.at(inputStreetId)->nodePair().first;
+            if (srcProbabilities.contains(id)) {
+              existingSum += srcProbabilities[id];
             }
           }
-          for (auto& [id, weight] : dstProbabilities) {
-            if (missingOutput.contains(id)) {
-              if (weight - delta > 0) {
-                weight -= delta;
-              } else {
-                weight = 0.;
-              }
-            }
-          }
-        } else if (!missingInput.empty()) {
-          if (delta < 0) {
-            delta /= missingInput.size();
-            for (auto& [id, weight] : srcProbabilities) {
-              if (missingInput.contains(id)) {
-                if (weight - delta > 0) {
-                  weight -= delta;
+          if (deltaTOT > 0) {
+            // Input > Output ===> Decrease input
+            for (auto const& [inputStreetId, _] : inputRoads) {
+              auto const id = streets.at(inputStreetId)->nodePair().first;
+              if (srcProbabilities.contains(id)) {
+                auto const actualDelta = std::abs(static_cast<double>(deltaTOT)) * (srcProbabilities[id] / existingSum);
+                if (srcProbabilities[id] - actualDelta > 0) {
+                  srcProbabilities[id] -= actualDelta;
                 } else {
-                  weight = 0.;
+                  srcProbabilities[id] = 0.;
                 }
+              } else {
+                srcProbabilities[id] = 0.;
               }
             }
           } else {
-            delta /= missingInput.size();
+            // Output > Input ===> Increase input
+            auto const deltaPerRoad = std::abs(static_cast<double>(deltaTOT) / inputRoads.size());
+            auto const actualDeltaTOT = std::abs(static_cast<double>(deltaTOT)) - (deltaPerRoad * missingInput.size()); 
+            for (auto const& [inputStreetId, _] : inputRoads) {
+              auto const id = streets.at(inputStreetId)->nodePair().first;
+              if (srcProbabilities.contains(id)) {
+                auto const actualDelta = actualDeltaTOT  * (srcProbabilities[id] / existingSum);
+                srcProbabilities[id] += actualDelta;
+              }
+            }
             for (auto const& id : missingInput) {
-              if (delta > 0) {
-                srcProbabilities[id] = delta;
+              srcProbabilities[id] = deltaPerRoad;
+            }
+          }
+          // Set missing outputs to zero
+          for (auto const& id : missingOutput) {
+              dstProbabilities[id] = 0.;
+            }
+        } else if (!missingInput.empty()) {
+          double existingSum = 0.;
+          for (auto const& [inputStreetId, _] : inputRoads) {
+            auto const id = streets.at(inputStreetId)->nodePair().first;
+            if (srcProbabilities.contains(id)) {
+              existingSum += srcProbabilities[id];
+            }
+          }
+          if (deltaTOT < 0) {
+            // Output > Input ===> Increase input
+            auto const deltaPerRoad = std::abs(static_cast<double>(deltaTOT) / inputRoads.size());
+            auto const actualDeltaTOT = std::abs(static_cast<double>(deltaTOT)) - (deltaPerRoad * missingInput.size()); 
+            for (auto const& [inputStreetId, _] : inputRoads) {
+              auto const id = streets.at(inputStreetId)->nodePair().first;
+              if (srcProbabilities.contains(id)) {
+                auto const actualDelta = actualDeltaTOT  * (srcProbabilities[id] / existingSum);
+                srcProbabilities[id] += actualDelta;
+              }
+            }
+            for (auto const& id : missingInput) {
+              srcProbabilities[id] = deltaPerRoad;
+            }
+          } else {
+            // Input > Output ===> Decrease input
+            for (auto const& [inputStreetId, _] : inputRoads) {
+              auto const id = streets.at(inputStreetId)->nodePair().first;
+              if (srcProbabilities.contains(id)) {
+                auto const actualDelta = std::abs(static_cast<double>(deltaTOT)) * (srcProbabilities[id] / existingSum);
+                if (srcProbabilities[id] - actualDelta > 0) {
+                  srcProbabilities[id] -= actualDelta;
+                } else {
+                  srcProbabilities[id] = 0.;
+                }
               } else {
                 srcProbabilities[id] = 0.;
               }
             }
           }
         } else if (!missingOutput.empty()) {
-          if (delta > 0) {
-            delta /= missingInput.size();
-            for (auto& [id, weight] : srcProbabilities) {
-              if (missingInput.contains(id)) {
-                if (weight - delta > 0) {
-                  weight -= delta;
-                } else {
-                  weight = 0.;
-                }
+          double existingSum = 0.;
+          for (auto const& [outputStreetId, _] : outputRoads) {
+            auto const id = streets.at(outputStreetId)->nodePair().second;
+            if (dstProbabilities.contains(id)) {
+              existingSum += dstProbabilities[id];
+            }
+          }
+          if (deltaTOT > 0) {
+            // Output < Input ===> Increase output
+            auto const deltaPerRoad = std::abs(static_cast<double>(deltaTOT) / outputRoads.size());
+            auto const actualDeltaTOT = std::abs(static_cast<double>(deltaTOT)) - (deltaPerRoad * missingOutput.size()); 
+            for (auto const& [outputStreetId, _] : outputRoads) {
+              auto const id = streets.at(outputStreetId)->nodePair().second;
+              if (dstProbabilities.contains(id)) {
+                auto const actualDelta = actualDeltaTOT  * (dstProbabilities[id] / existingSum);
+                dstProbabilities[id] += actualDelta;
               }
             }
-          } else {
-            delta /= missingOutput.size();
             for (auto const& id : missingOutput) {
-              if (delta > 0) {
-                dstProbabilities[id] = delta;
+              dstProbabilities[id] = deltaPerRoad;
+            }
+          } else {
+            // Output > Input ===> Decrease output
+            for (auto const& [outputStreetId, _] : outputRoads) {
+              auto const id = streets.at(outputStreetId)->nodePair().second;
+              if (dstProbabilities.contains(id)) {
+                auto const actualDelta = std::abs(static_cast<double>(deltaTOT)) * (dstProbabilities[id] / existingSum);
+                if (dstProbabilities[id] - actualDelta > 0) {
+                  dstProbabilities[id] -= actualDelta;
+                } else {
+                  dstProbabilities[id] = 0.;
+                }
               } else {
                 dstProbabilities[id] = 0.;
               }
             }
           }
         }
+        // if (!missingInput.empty() && !missingOutput.empty()) {
+        //   delta /= (missingInput.size() + missingOutput.size());
+        //   for (auto& [id, weight] : srcProbabilities) {
+        //     if (missingInput.contains(id)) {
+        //       if (weight - delta > 0) {
+        //         weight -= delta;
+        //       } else {
+        //         weight = 0.;
+        //       }
+        //     }
+        //   }
+        //   for (auto& [id, weight] : dstProbabilities) {
+        //     if (missingOutput.contains(id)) {
+        //       if (weight - delta > 0) {
+        //         weight -= delta;
+        //       } else {
+        //         weight = 0.;
+        //       }
+        //     }
+        //   }
+        // } else if (!missingInput.empty()) {
+        //   if (delta < 0) {
+        //     delta /= missingInput.size();
+        //     for (auto& [id, weight] : srcProbabilities) {
+        //       if (missingInput.contains(id)) {
+        //         if (weight - delta > 0) {
+        //           weight -= delta;
+        //         } else {
+        //           weight = 0.;
+        //         }
+        //       }
+        //     }
+        //   } else {
+        //     delta /= missingInput.size();
+        //     for (auto const& id : missingInput) {
+        //       if (delta > 0) {
+        //         srcProbabilities[id] = delta;
+        //       } else {
+        //         srcProbabilities[id] = 0.;
+        //       }
+        //     }
+        //   }
+        // } else if (!missingOutput.empty()) {
+        //   if (delta > 0) {
+        //     delta /= missingInput.size();
+        //     for (auto& [id, weight] : srcProbabilities) {
+        //       if (missingInput.contains(id)) {
+        //         if (weight - delta > 0) {
+        //           weight -= delta;
+        //         } else {
+        //           weight = 0.;
+        //         }
+        //       }
+        //     }
+        //   } else {
+        //     delta /= missingOutput.size();
+        //     for (auto const& id : missingOutput) {
+        //       if (delta > 0) {
+        //         dstProbabilities[id] = delta;
+        //       } else {
+        //         dstProbabilities[id] = 0.;
+        //       }
+        //     }
+        //   }
+        // }
       }
       // Erase nodes with no data
       std::erase_if(srcProbabilities, [](const auto& pair) { return pair.second == 0.; });
@@ -630,14 +761,18 @@ int main(int argc, char* argv[]) {
           dstProbabilities.end(),
           0.,
           [](double acc, const auto& pair) { return acc + pair.second; })};
+      if (inputSum < 0 || outputSum < 0) {
+        pConsoleLogger->critical("Negative input {} or output {} weight sum", inputSum, outputSum);
+        std::abort();
+      }
       if (inputSum > 0) {
         for (auto& [id, count] : srcProbabilities) {
           count /= inputSum;
         }
       } else {
-        auto const size = input_data.size();
-        for (auto const& [id, _] : input_data) {
-          srcProbabilities[id] = 1. / size;
+        auto const size = srcProbabilities.size();
+        for (auto& [id, weight] : srcProbabilities) {
+          weight = 1. / size;
         }
       }
       if (outputSum > 0) {
@@ -645,9 +780,9 @@ int main(int argc, char* argv[]) {
           count /= outputSum;
         }
       } else {
-        auto const size = output_data.size();
-        for (auto const& [id, _] : output_data) {
-          dstProbabilities[id] = 1. / size;
+        auto const size = dstProbabilities.size();
+        for (auto& [id, weight] : dstProbabilities) {
+          weight = 1. / size;
         }
         pConsoleLogger->warn("No output data for time {}, using uniform distribution.",
                              dynamics.time());
@@ -659,7 +794,7 @@ int main(int argc, char* argv[]) {
       } else {
         auto const oldValue = nAgents;
         nAgents /= nAgents < 10 ? 1 : (GRANULARITY / INTERVAL_AGENTS_IN);
-        pConsoleLogger->info(
+        pConsoleLogger->debug(
             "Time: {}, nAgents: {} -> {}", dynamics.time(), oldValue, nAgents);
       }
       if (dstProbabilities.empty()) {
