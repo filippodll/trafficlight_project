@@ -97,38 +97,38 @@ int main(int argc, char* argv[]) {
 
   // segmenti viali
   Street s0_1{
-      1, 1, 480., 13.9, std::make_pair(0, 1), 3, "2.10 2.6 6 1"};  // (402) 2.10 2.6 6 1
+      1, 1, 500., 13.9, std::make_pair(0, 1), 3, "2.10 2.6 6 1"};  // (402) 2.10 2.6 6 1
   Street s1_0{
-      2, 1, 480., 13.9, std::make_pair(1, 0), 3, "2.6 2.10 6 1"};  // (499) 2.6 2.10 6 1
+      2, 1, 500., 13.9, std::make_pair(1, 0), 3, "2.6 2.10 6 1"};  // (499) 2.6 2.10 6 1
 
   Street s1_2{
-      3, 1, 386., 13.9, std::make_pair(1, 2), 3, "2.6 4.47 4 1 "};  // (501) 2.6 4.47 4 1
+      3, 1, 400., 13.9, std::make_pair(1, 2), 3, "2.6 4.47 4 1 "};  // (501) 2.6 4.47 4 1
   Street s2_1{
-      4, 1, 386., 13.9, std::make_pair(2, 1), 3, "4.47 2.6 8 1"};  // (820) 4.47 2.6 8 1
+      4, 1, 400., 13.9, std::make_pair(2, 1), 3, "4.47 2.6 8 1"};  // (820) 4.47 2.6 8 1
 
   Street s2_3{
-      5, 1, 532., 13.9, std::make_pair(2, 3), 3, "4.47 4.46 4 1 "};  // (821) 4.47 4.46 4 1
+      5, 1, 550., 13.9, std::make_pair(2, 3), 3, "4.47 4.46 4 1 "};  // (821) 4.47 4.46 4 1
   Street s3_2{
-      6, 1, 532., 13.9, std::make_pair(3, 2), 3, "4.46 4.47 8 1"};  // (819) 4.46 4.47 8 1
+      6, 1, 550., 13.9, std::make_pair(3, 2), 3, "4.46 4.47 8 1"};  // (819) 4.46 4.47 8 1
 
   Street s3_4{
-      7, 1, 237., 13.9, std::make_pair(3, 4), 1, "4.46 4.45 4 1"};  // (818) 4.46 4.45 4 1
+      7, 1, 260., 13.9, std::make_pair(3, 4), 1, "4.46 4.45 4 1"};  // (818) 4.46 4.45 4 1
   Street s4_3{
-      8, 1, 237., 13.9, std::make_pair(4, 3), 3, "4.45 4.46 8 1"};  // (815) 4.45 4.46 8 1
+      8, 1, 260., 13.9, std::make_pair(4, 3), 3, "4.45 4.46 8 1"};  // (815) 4.45 4.46 8 1
   Street s3_5{
-      9, 1, 375., 13.9, std::make_pair(3, 5), 3, "4.46 4.45 4 1"};  // (818) 4.46 4.45 4 1
+      9, 1, 410., 13.9, std::make_pair(3, 5), 3, "4.46 4.45 4 1"};  // (818) 4.46 4.45 4 1
 
-  Street s5_4{10, 1, 135., 13.9, std::make_pair(5, 4), 3};
+  Street s5_4{10, 1, 150., 13.9, std::make_pair(5, 4), 3};
 
   Street s5_6{
-      11, 1, 230., 13.9, std::make_pair(5, 6), 3, "4.45 4.44 4 1"};  // (814) 4.45 4.44 4 1
+      11, 1, 300., 13.9, std::make_pair(5, 6), 3, "4.45 4.44 4 1"};  // (814) 4.45 4.44 4 1
   Street s6_5{
-      12, 1, 230., 13.9, std::make_pair(6, 5), 3, "4.44 4.45 8 1"};  // (812) 4.44 4.45 8 1
+      12, 1, 300., 13.9, std::make_pair(6, 5), 3, "4.44 4.45 8 1"};  // (812) 4.44 4.45 8 1
 
   Street s6_7{
-      13, 1, 653., 13.9, std::make_pair(6, 7), 3, "4.44 4.41 4 1"};  // (811) 4.44 4.41 4 1
+      13, 1, 700., 13.9, std::make_pair(6, 7), 3, "4.44 4.41 4 1"};  // (811) 4.44 4.41 4 1
   Street s7_6{
-      14, 1, 653., 13.9, std::make_pair(7, 6), 3, "4.41 4.44 8 1"};  // (801) 4.41 4.44 8 1
+      14, 1, 700., 13.9, std::make_pair(7, 6), 3, "4.41 4.44 8 1"};  // (801) 4.41 4.44 8 1
 
   Street s7_8{
       15, 1, 230., 13.9, std::make_pair(7, 8), 3, "4.41 4.42 4 1"};  // (800) 4.41 4.42 4 1
@@ -139,60 +139,60 @@ int main(int argc, char* argv[]) {
 
   Street s9_1{17,
               1,
-              250.,
+              750.,
               8.3,
               std::make_pair(9, 1),
-              1,
+              2,
               "2.5 2.6 2 1"};  // (496) 2.5 2.6 2 1      0.127 2.6 1 1 //saragozza (1)
   Street s1_9{
-      18, 1, 250., 8.3, std::make_pair(1, 9), 2, "2.6 2.5 6 1"};  // (500) 2.6 2.5 6 1
+      18, 1, 750., 8.3, std::make_pair(1, 9), 2, "2.6 2.5 6 1"};  // (500) 2.6 2.5 6 1
   Street s10_1{19, 1, 250., 8.3, std::make_pair(10, 1), 1};
 
-  Street s2_11{20, 1, 100., 8.3, std::make_pair(2, 11), 1};  // vallescura  (2)
+  Street s2_11{20, 1, 300., 8.3, std::make_pair(2, 11), 1};  // vallescura  (2)
   Street s11_2{21,
                1,
-               100.,
+               300.,
                8.3,
                std::make_pair(11, 2),
                1,
                "0.127 4.47 2 1"};  // (278) 0.127 4.47 2 1
   Street s12_2{22,
                1,
-               100.,
+               160.,
                8.3,
                std::make_pair(12, 2),
                1,
-               "0.127 4.47 6 1"};  // (279) 0.127 4.47 6 1
+               "0.127 4.47 6 1"};  // Malpertuso (279) 0.127 4.47 6 1
 
   Street s13_3{23,
                1,
-               200.,
+               500.,
                8.3,
                std::make_pair(13, 3),
-               1,
+               2,
                "0.127 4.46 2 1"};  // (273) 0.127 4.46 2 1   (274) 0.127 4.46 3
                                    // 1    //san mamolo  (3)
   Street s3_13{24,
                1,
-               200.,
+               500.,
                8.3,
                std::make_pair(3, 13),
                1,
                "4.46 0.127 6 1"};  // (816) 4.46 0.127 6 1
-  Street s3_14{25, 1, 100., 8.3, std::make_pair(3, 14), 1};
+  Street s3_14{25, 1, 240., 8.3, std::make_pair(3, 14), 1};
   Street s14_3{26,
                1,
-               100.,
+               240.,
                8.3,
                std::make_pair(14, 3),
                1,
                "0.127 4.46 6 1"};  // (275) 0.127 4.46 6 1
 
-  Street s4_15{27, 1, 90., 8.3, std::make_pair(4, 15), 1};  // savenella  (3)
+  Street s4_15{27, 1, 190., 8.3, std::make_pair(4, 15), 1};  // savenella  (3)
 
   Street s16_5{28,
                1,
-               90.,
+               270.,
                8.3,
                std::make_pair(16, 5),
                1,
@@ -200,27 +200,27 @@ int main(int argc, char* argv[]) {
 
   Street s17_6{29,
                1,
-               200.,
+               400.,
                8.3,
                std::make_pair(17, 6),
                1,
                "0.127 4.44 2 1"};  // (266) 0.127 4.44 2 1 //castiglione  (6)
-  Street s6_17{30, 1, 200., 8.3, std::make_pair(6, 17), 1};
-  Street s6_18{31, 1, 100., 8.3, std::make_pair(6, 18), 1};
+  Street s6_17{30, 1, 400., 8.3, std::make_pair(6, 17), 1};
+  Street s6_18{31, 1, 200., 8.3, std::make_pair(6, 18), 1};
   Street s18_6{32,
                1,
-               100.,
+               200.,
                8.3,
                std::make_pair(18, 6),
                1,
                "0.127 4.44 6 1"};  // (267) 0.127 4.44 6 1
 
-  Street s19_7{33, 1, 215., 8.3, std::make_pair(19, 7), 1};  // santo stefano (7)
+  Street s19_7{33, 1, 240., 8.3, std::make_pair(19, 7), 2};  // santo stefano (7)
   Street s7_19{
-      34, 1, 215., 8.3, std::make_pair(7, 19), 2, "4.41 4.33 6 1"};  // (799) 4.41 4.33 6 1
+      34, 1, 240., 8.3, std::make_pair(7, 19), 2, "4.41 4.33 6 1"};  // (799) 4.41 4.33 6 1
   Street s20_7{35,
                1,
-               200.,
+               350.,
                8.3,
                std::make_pair(20, 7),
                1,
@@ -378,7 +378,7 @@ int main(int argc, char* argv[]) {
   if (OPTIMIZE) {
     dynamics.setDataUpdatePeriod(INTERVAL_AGENTS_IN);
   }
-  dynamics.setSpeedFluctuationSTD(0.1);
+  dynamics.setSpeedFluctuationSTD(0.35);
 
   auto const& streets{dynamics.graph().streetSet()};
 
@@ -394,10 +394,10 @@ int main(int argc, char* argv[]) {
   std::map<Unit, data_t> output_data;
   std::map<Unit, data_t> inner_data;
   int iValue;
-  std::set<Unit> inputCoils{
+  std::set<Unit> const inputCoils{
       1, 175, 190, 233, 254, 276, 297, 341, 363, 384, 427, /**/ 211, 406};
-  std::set<Unit> outputCoils{21, 30, 76, 155, 166, /**/ 53, 77, 99, 143};
-  std::set<Unit> innerCoils{23, 43, 45, 65, 67, 87, 68, 109, 111, 131, 133, 153};
+  std::set<Unit> const outputCoils{21, 30, 76, 155, 166, /**/ 53, 77, 99, 143};
+  std::set<Unit> const innerCoils{23, 43, 45, 65, 67, 87, 68, 109, 111, 131, 133, 153};
   while (std::getline(ifs, line)) {
     std::istringstream iss(line);
     std::string token;
@@ -428,12 +428,24 @@ int main(int argc, char* argv[]) {
       }
     } else if (innerCoils.contains(streetId)) {
       inner_data[streetId] = data_t(NDATAPOINTS, 0);
+      if (streetId == 87) {
+        inner_data[109] = data_t(NDATAPOINTS, 0);
+      }
+      if (streetId == 109) {
+        inner_data[87] = data_t(NDATAPOINTS, 0);
+      }
       for (size_t i = 0; i < NDATAPOINTS - 1; ++i) {
         iss >> iValue;
         if (iValue > 0) {
           inner_data[streetId][i] = iValue;
         } else {
           inner_data[streetId][i] = 0;
+        }
+        if (streetId == 87) {
+          inner_data[109][i] = inner_data[streetId][i];
+        }
+        if (streetId == 109) {
+          inner_data[87][i] = inner_data[streetId][i];
         }
       }
     }
@@ -443,12 +455,8 @@ int main(int argc, char* argv[]) {
   pConsoleLogger->info("Input data imported");
   pConsoleLogger->info("Creating itineraries");
 
-  // create a vector from 0 to 20
   std::vector<Unit> outNodeList;
   outNodeList.reserve(output_data.size());
-  // for (const auto& [id, _] : output_data) {
-  //   outNodeList.push_back(id);
-  // }
   for (const auto& id : outputCoils) {
     auto const& nid{streets.at(id)->nodePair().second};
     outNodeList.push_back(nid);
@@ -508,6 +516,7 @@ int main(int argc, char* argv[]) {
         dstProbabilities[id] = (data[idx_out]);
       }
       // Balance every node input
+      std::unordered_map<dsm::Id, dsm::Size> synthetic_inner_data;
       for (auto const& [nodeId, node] : dynamics.graph().nodeSet()) {
         auto const& inputRoads{adjMatrix.getCol(nodeId, true)};
         auto const& outputRoads{adjMatrix.getRow(nodeId, true)};
@@ -522,8 +531,10 @@ int main(int argc, char* argv[]) {
             inputCounts += srcProbabilities[id];
           } else if (inner_data.contains(inputStreetId)) {
             inputCounts += inner_data[inputStreetId][idx_in];
-          } else if (inputCoils.contains(inputStreetId)) {
-            missingInput.emplace(id);
+          } else if (synthetic_inner_data.contains(inputStreetId)) {
+            inputCounts += synthetic_inner_data[inputStreetId];
+          } else {
+            missingInput.emplace(inputStreetId);
           }
         }
         // Output roads
@@ -533,8 +544,10 @@ int main(int argc, char* argv[]) {
             outputCounts += dstProbabilities[id];
           } else if (inner_data.contains(outputStreetId)) {
             outputCounts += inner_data[outputStreetId][idx_out];
-          } else if (outputCoils.contains(outputStreetId)) {
-            missingOutput.emplace(id);
+          } else if (synthetic_inner_data.contains(outputStreetId)) {
+            outputCounts += synthetic_inner_data[outputStreetId];
+          } else {
+            missingOutput.emplace(outputStreetId);
           }
         }
         auto const deltaTOT{inputCounts - outputCounts};
@@ -548,192 +561,70 @@ int main(int argc, char* argv[]) {
               missingInput.size(),
               missingOutput.size());
         }
-
-        // Init rebalancing
-        if (!missingInput.empty() && !missingOutput.empty()) {
-          double existingSum = 0.;
-          for (auto const& [inputStreetId, _] : inputRoads) {
-            auto const id = streets.at(inputStreetId)->nodePair().first;
-            if (srcProbabilities.contains(id)) {
-              existingSum += srcProbabilities[id];
-            }
-          }
-          if (deltaTOT > 0) {
-            // Input > Output ===> Decrease input
-            for (auto const& [inputStreetId, _] : inputRoads) {
-              auto const id = streets.at(inputStreetId)->nodePair().first;
-              if (srcProbabilities.contains(id)) {
-                auto const actualDelta = std::abs(static_cast<double>(deltaTOT)) * (srcProbabilities[id] / existingSum);
-                if (srcProbabilities[id] - actualDelta > 0) {
-                  srcProbabilities[id] -= actualDelta;
-                } else {
-                  srcProbabilities[id] = 0.;
-                }
-              } else {
-                srcProbabilities[id] = 0.;
-              }
-            }
-          } else {
-            // Output > Input ===> Increase input
-            auto const deltaPerRoad = std::abs(static_cast<double>(deltaTOT) / inputRoads.size());
-            auto const actualDeltaTOT = std::abs(static_cast<double>(deltaTOT)) - (deltaPerRoad * missingInput.size()); 
-            for (auto const& [inputStreetId, _] : inputRoads) {
-              auto const id = streets.at(inputStreetId)->nodePair().first;
-              if (srcProbabilities.contains(id)) {
-                auto const actualDelta = actualDeltaTOT  * (srcProbabilities[id] / existingSum);
-                srcProbabilities[id] += actualDelta;
-              }
-            }
-            for (auto const& id : missingInput) {
-              srcProbabilities[id] = deltaPerRoad;
-            }
-          }
-          // Set missing outputs to zero
+        ////////////////////////
+        // Balance the nodes  //
+        ////////////////////////
+        if (deltaTOT > 0) {
+          // Input > Output ===> Add agents to output
+          auto const deltaPerRoad{std::abs(static_cast<double>(deltaTOT)) /
+                                  missingOutput.size()};
           for (auto const& id : missingOutput) {
-              dstProbabilities[id] = 0.;
-            }
-        } else if (!missingInput.empty()) {
-          double existingSum = 0.;
-          for (auto const& [inputStreetId, _] : inputRoads) {
-            auto const id = streets.at(inputStreetId)->nodePair().first;
-            if (srcProbabilities.contains(id)) {
-              existingSum += srcProbabilities[id];
+            if (outputCoils.contains(id)) {
+              auto const nid = streets.at(id)->nodePair().second;
+              if (!dstProbabilities.contains(nid)) {
+                dstProbabilities[nid] = deltaPerRoad;
+              }
+            } else if (innerCoils.contains(id)) {
+              if (synthetic_inner_data.contains(id)) {
+                pConsoleLogger->warn("Inner coil {} already has data", id);
+              }
+              synthetic_inner_data[id] = deltaPerRoad;
             }
           }
-          if (deltaTOT < 0) {
-            // Output > Input ===> Increase input
-            auto const deltaPerRoad = std::abs(static_cast<double>(deltaTOT) / inputRoads.size());
-            auto const actualDeltaTOT = std::abs(static_cast<double>(deltaTOT)) - (deltaPerRoad * missingInput.size()); 
-            for (auto const& [inputStreetId, _] : inputRoads) {
-              auto const id = streets.at(inputStreetId)->nodePair().first;
-              if (srcProbabilities.contains(id)) {
-                auto const actualDelta = actualDeltaTOT  * (srcProbabilities[id] / existingSum);
-                srcProbabilities[id] += actualDelta;
+          for (auto const& id : missingInput) {
+            if (inputCoils.contains(id)) {
+              auto const nid = streets.at(id)->nodePair().first;
+              if (!srcProbabilities.contains(nid)) {
+                srcProbabilities[nid] = 0.;
               }
-            }
-            for (auto const& id : missingInput) {
-              srcProbabilities[id] = deltaPerRoad;
-            }
-          } else {
-            // Input > Output ===> Decrease input
-            for (auto const& [inputStreetId, _] : inputRoads) {
-              auto const id = streets.at(inputStreetId)->nodePair().first;
-              if (srcProbabilities.contains(id)) {
-                auto const actualDelta = std::abs(static_cast<double>(deltaTOT)) * (srcProbabilities[id] / existingSum);
-                if (srcProbabilities[id] - actualDelta > 0) {
-                  srcProbabilities[id] -= actualDelta;
-                } else {
-                  srcProbabilities[id] = 0.;
-                }
-              } else {
-                srcProbabilities[id] = 0.;
+            } else if (innerCoils.contains(id)) {
+              if (synthetic_inner_data.contains(id)) {
+                pConsoleLogger->warn("Inner coil {} already has data", id);
               }
+              synthetic_inner_data[id] = 0.;
             }
           }
-        } else if (!missingOutput.empty()) {
-          double existingSum = 0.;
-          for (auto const& [outputStreetId, _] : outputRoads) {
-            auto const id = streets.at(outputStreetId)->nodePair().second;
-            if (dstProbabilities.contains(id)) {
-              existingSum += dstProbabilities[id];
+        } else if (deltaTOT < 0) {
+          // Output > Input ===> Add agents to input
+          auto const deltaPerRoad{std::abs(static_cast<double>(deltaTOT)) /
+                                  missingInput.size()};
+          for (auto const& id : missingInput) {
+            if (inputCoils.contains(id)) {
+              auto const nid = streets.at(id)->nodePair().first;
+              if (!srcProbabilities.contains(nid)) {
+                srcProbabilities[nid] = deltaPerRoad;
+              }
+            } else if (innerCoils.contains(id)) {
+              if (synthetic_inner_data.contains(id)) {
+                pConsoleLogger->warn("Inner coil {} already has data", id);
+              }
+              synthetic_inner_data[id] = deltaPerRoad;
             }
           }
-          if (deltaTOT > 0) {
-            // Output < Input ===> Increase output
-            auto const deltaPerRoad = std::abs(static_cast<double>(deltaTOT) / outputRoads.size());
-            auto const actualDeltaTOT = std::abs(static_cast<double>(deltaTOT)) - (deltaPerRoad * missingOutput.size()); 
-            for (auto const& [outputStreetId, _] : outputRoads) {
-              auto const id = streets.at(outputStreetId)->nodePair().second;
-              if (dstProbabilities.contains(id)) {
-                auto const actualDelta = actualDeltaTOT  * (dstProbabilities[id] / existingSum);
-                dstProbabilities[id] += actualDelta;
+          for (auto const& id : missingOutput) {
+            if (outputCoils.contains(id)) {
+              auto const nid = streets.at(id)->nodePair().second;
+              if (!dstProbabilities.contains(nid)) {
+                dstProbabilities[nid] = 0.;
               }
-            }
-            for (auto const& id : missingOutput) {
-              dstProbabilities[id] = deltaPerRoad;
-            }
-          } else {
-            // Output > Input ===> Decrease output
-            for (auto const& [outputStreetId, _] : outputRoads) {
-              auto const id = streets.at(outputStreetId)->nodePair().second;
-              if (dstProbabilities.contains(id)) {
-                auto const actualDelta = std::abs(static_cast<double>(deltaTOT)) * (dstProbabilities[id] / existingSum);
-                if (dstProbabilities[id] - actualDelta > 0) {
-                  dstProbabilities[id] -= actualDelta;
-                } else {
-                  dstProbabilities[id] = 0.;
-                }
-              } else {
-                dstProbabilities[id] = 0.;
+            } else if (innerCoils.contains(id)) {
+              if (synthetic_inner_data.contains(id)) {
+                pConsoleLogger->warn("Inner coil {} already has data", id);
               }
+              synthetic_inner_data[id] = 0.;
             }
           }
         }
-        // if (!missingInput.empty() && !missingOutput.empty()) {
-        //   delta /= (missingInput.size() + missingOutput.size());
-        //   for (auto& [id, weight] : srcProbabilities) {
-        //     if (missingInput.contains(id)) {
-        //       if (weight - delta > 0) {
-        //         weight -= delta;
-        //       } else {
-        //         weight = 0.;
-        //       }
-        //     }
-        //   }
-        //   for (auto& [id, weight] : dstProbabilities) {
-        //     if (missingOutput.contains(id)) {
-        //       if (weight - delta > 0) {
-        //         weight -= delta;
-        //       } else {
-        //         weight = 0.;
-        //       }
-        //     }
-        //   }
-        // } else if (!missingInput.empty()) {
-        //   if (delta < 0) {
-        //     delta /= missingInput.size();
-        //     for (auto& [id, weight] : srcProbabilities) {
-        //       if (missingInput.contains(id)) {
-        //         if (weight - delta > 0) {
-        //           weight -= delta;
-        //         } else {
-        //           weight = 0.;
-        //         }
-        //       }
-        //     }
-        //   } else {
-        //     delta /= missingInput.size();
-        //     for (auto const& id : missingInput) {
-        //       if (delta > 0) {
-        //         srcProbabilities[id] = delta;
-        //       } else {
-        //         srcProbabilities[id] = 0.;
-        //       }
-        //     }
-        //   }
-        // } else if (!missingOutput.empty()) {
-        //   if (delta > 0) {
-        //     delta /= missingInput.size();
-        //     for (auto& [id, weight] : srcProbabilities) {
-        //       if (missingInput.contains(id)) {
-        //         if (weight - delta > 0) {
-        //           weight -= delta;
-        //         } else {
-        //           weight = 0.;
-        //         }
-        //       }
-        //     }
-        //   } else {
-        //     delta /= missingOutput.size();
-        //     for (auto const& id : missingOutput) {
-        //       if (delta > 0) {
-        //         dstProbabilities[id] = delta;
-        //       } else {
-        //         dstProbabilities[id] = 0.;
-        //       }
-        //     }
-        //   }
-        // }
       }
       // Erase nodes with no data
       std::erase_if(srcProbabilities, [](const auto& pair) { return pair.second == 0.; });
@@ -762,7 +653,8 @@ int main(int argc, char* argv[]) {
           0.,
           [](double acc, const auto& pair) { return acc + pair.second; })};
       if (inputSum < 0 || outputSum < 0) {
-        pConsoleLogger->critical("Negative input {} or output {} weight sum", inputSum, outputSum);
+        pConsoleLogger->critical(
+            "Negative input {} or output {} weight sum", inputSum, outputSum);
         std::abort();
       }
       if (inputSum > 0) {
@@ -793,7 +685,8 @@ int main(int argc, char* argv[]) {
         nAgents = 0;
       } else {
         auto const oldValue = nAgents;
-        nAgents /= nAgents < 10 ? 1 : (GRANULARITY / INTERVAL_AGENTS_IN);
+        auto const scaleFactor{static_cast<double>(GRANULARITY) / INTERVAL_AGENTS_IN};
+        nAgents /= scaleFactor;
         pConsoleLogger->debug(
             "Time: {}, nAgents: {} -> {}", dynamics.time(), oldValue, nAgents);
       }
