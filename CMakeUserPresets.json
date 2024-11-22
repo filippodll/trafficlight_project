@@ -8,7 +8,7 @@
           "CMAKE_BUILD_TYPE": "Release"
         },
         "environment": {
-          "VCPKG_ROOT": "../vcpkg"
+          "VCPKG_ROOT": "$VCPKG_ROOT"
         }
       },
       {
@@ -18,7 +18,7 @@
           "CMAKE_BUILD_TYPE": "Debug"
         },
         "environment": {
-          "VCPKG_ROOT": "../vcpkg"
+          "VCPKG_ROOT": "$VCPKG_ROOT"
         }
       }
     ]
