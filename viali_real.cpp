@@ -211,7 +211,7 @@ int main(int argc, char* argv[]) {
                1,
                "0.127 4.44 6 1"};  // (267) 0.127 4.44 6 1
 
-  Street s19_7{33, 1, 240., 8.3, std::make_pair(19, 7), 2};  // santo stefano (7)
+  Street s19_7{33, 1, 240., 8.3, std::make_pair(19, 7), 1};  // santo stefano (7)
   Street s7_19{
       34, 1, 240., 8.3, std::make_pair(7, 19), 2, "4.41 4.33 6 1"};  // (799) 4.41 4.33 6 1
   Street s20_7{35,
