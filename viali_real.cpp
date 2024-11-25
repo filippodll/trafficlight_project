@@ -24,14 +24,10 @@ const std::string IN_COORDS{"./coordinates.dsm"};  // input coords file
 
 // Compatible with dsm 1.3.8
 
-using Unit = unsigned int;
 using Delay = uint8_t;
 
-using Graph = dsm::Graph;
-using Itinerary = dsm::Itinerary;
 using Dynamics = dsm::FirstOrderDynamics<Delay>;
 using Street = dsm::Street;
-using SpireStreet = dsm::SpireStreet;
 using TrafficLight = dsm::TrafficLight<Delay>;
 
 void printLoadingBar(int const i, int const n) {
@@ -102,12 +98,12 @@ int main(int argc, char* argv[]) {
       2, 1, 500., 13.9, std::make_pair(1, 0), 3, "2.6 2.10 6 1"};  // (499) 2.6 2.10 6 1
 
   Street s1_2{
-      3, 1, 400., 13.9, std::make_pair(1, 2), 3, "2.6 4.47 4 1 "};  // (501) 2.6 4.47 4 1
+      3, 1, 400., 13.9, std::make_pair(1, 2), 3, "2.6 4.47 4 1"};  // (501) 2.6 4.47 4 1
   Street s2_1{
       4, 1, 400., 13.9, std::make_pair(2, 1), 3, "4.47 2.6 8 1"};  // (820) 4.47 2.6 8 1
 
   Street s2_3{
-      5, 1, 550., 13.9, std::make_pair(2, 3), 3, "4.47 4.46 4 1 "};  // (821) 4.47 4.46 4 1
+      5, 1, 550., 13.9, std::make_pair(2, 3), 3, "4.47 4.46 4 1"};  // (821) 4.47 4.46 4 1
   Street s3_2{
       6, 1, 550., 13.9, std::make_pair(3, 2), 3, "4.46 4.47 8 1"};  // (819) 4.46 4.47 8 1
 
@@ -268,7 +264,7 @@ int main(int argc, char* argv[]) {
   tl7.addStreetPriority(s6_7.id());
   tl7.addStreetPriority(s8_7.id());
 
-  Graph graph;
+  dsm::Graph graph;
   graph.addNode(std::make_unique<TrafficLight>(tl1));
   graph.addNode(std::make_unique<TrafficLight>(tl2));
   graph.addNode(std::make_unique<TrafficLight>(tl3));
@@ -360,7 +356,7 @@ int main(int argc, char* argv[]) {
   }
   adj.close();
 
-  std::unordered_map<std::string_view, Unit> coilmap;
+  std::unordered_map<std::string_view, dsm::Id> coilmap;
   std::ofstream dict("./structures_out.py");
   dict << "COIL_DICT = {\n";
   for (auto const& [id, street] : graph.streetSet()) {
@@ -378,32 +374,37 @@ int main(int argc, char* argv[]) {
   if (OPTIMIZE) {
     dynamics.setDataUpdatePeriod(INTERVAL_AGENTS_IN);
   }
-  dynamics.setSpeedFluctuationSTD(0.35);
+  dynamics.setSpeedFluctuationSTD(0.1);
+  // dynamics.setMaxFlowPercentage(0.75);
 
   auto const& streets{dynamics.graph().streetSet()};
 
   pConsoleLogger->info("Importing input data...");
   std::ifstream ifs(INPUT_FILE);
   if (!ifs) {
-    std::cerr << "Error opening file " << INPUT_FILE << '\n';
+    pConsoleLogger->critical("Cannot open input file {}", INPUT_FILE);
     return 1;
   }
   std::string line;
   std::getline(ifs, line);  // skip header
-  std::map<Unit, data_t> input_data;
-  std::map<Unit, data_t> output_data;
-  std::map<Unit, data_t> inner_data;
+  std::map<dsm::Id, data_t> input_data;
+  std::map<dsm::Id, data_t> output_data;
+  std::map<dsm::Id, data_t> inner_data;
   int iValue;
-  std::set<Unit> const inputCoils{
+  std::set<dsm::Id> const inputCoils{
       1, 175, 190, 233, 254, 276, 297, 341, 363, 384, 427, /**/ 211, 406};
-  std::set<Unit> const outputCoils{21, 30, 76, 155, 166, /**/ 53, 77, 99, 143};
-  std::set<Unit> const innerCoils{23, 43, 45, 65, 67, 87, 68, 109, 111, 131, 133, 153};
+  std::set<dsm::Id> const outputCoils{21, 30, 76, 155, 166, /**/ 53, 77, 99, 143};
+  std::set<dsm::Id> const innerCoils{23, 43, 45, 65, 67, 87, 68, 109, 111, 131, 133, 153};
   while (std::getline(ifs, line)) {
     std::istringstream iss(line);
     std::string token;
 
     std::getline(iss, token, ';');
-    Unit streetId = coilmap.at(token);
+    if (!coilmap.contains(token)) {
+      pConsoleLogger->warn("Unknown coil {}. Skipping.", token);
+      continue;
+    }
+    dsm::Id streetId = coilmap.at(token);
     if (inputCoils.contains(streetId)) {
       auto const nodeId{streets.at(streetId)->nodePair().first};
       input_data[nodeId] = data_t(NDATAPOINTS, 0);
@@ -455,7 +456,7 @@ int main(int argc, char* argv[]) {
   pConsoleLogger->info("Input data imported");
   pConsoleLogger->info("Creating itineraries");
 
-  std::vector<Unit> outNodeList;
+  std::vector<dsm::Id> outNodeList;
   outNodeList.reserve(output_data.size());
   for (const auto& id : outputCoils) {
     auto const& nid{streets.at(id)->nodePair().second};
@@ -499,7 +500,7 @@ int main(int argc, char* argv[]) {
   size_t current_index{0};
   dsm::Size nAgents{0};
 
-  std::map<Unit, double> srcProbabilities, dstProbabilities;
+  std::map<dsm::Id, double> srcProbabilities, dstProbabilities;
 
   auto const& adjMatrix{dynamics.graph().adjMatrix()};
 
@@ -736,7 +737,7 @@ int main(int argc, char* argv[]) {
       outSpires << dynamics.time();
       for (const auto& [id, street] : dynamics.graph().streetSet()) {
         if (street->isSpire()) {
-          auto& spire = dynamic_cast<SpireStreet&>(*street);
+          auto& spire = dynamic_cast<dsm::SpireStreet&>(*street);
           outSpires << ';' << spire.outputCounts(true);
         } else {
           outSpires << ';';
@@ -763,11 +764,25 @@ int main(int argc, char* argv[]) {
 
   pConsoleLogger->info("There are still {} agents in the system.",
                        dynamics.agents().size());
+  pConsoleLogger->info("Simulation ended at time {} / {}", dynamics.time(), MAX_TIME);
 
   outSpires.close();
   streetDensity.close();
   nodeDensity.close();
   out.close();
+
+  pConsoleLogger->info("Writing synthetic data to file...");
+
+  std::ofstream syntheticData(OUT_FOLDER + "synthetic_data.csv");
+  syntheticData << "section;data\n";
+  for (auto const& [id, data] : inner_data) {
+    syntheticData << id << ';';
+    for (auto const& d : data) {
+      syntheticData << d << ' ';
+    }
+    syntheticData << std::endl;
+  }
+  syntheticData.close();
 
 #ifdef __APPLE__
   t.join();
