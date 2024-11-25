@@ -15,7 +15,15 @@ elseif (CMAKE_BUILD_TYPE STREQUAL "Release")
 endif()
 
 find_package(dsm REQUIRED)
-find_package(spdlog CONFIG REQUIRED)
+
+include(FetchContent)
+# Get spdlog
+FetchContent_Declare(
+    spdlog
+    GIT_REPOSITORY https://github.com/gabime/spdlog.git
+    GIT_TAG v1.15.0
+)
+FetchContent_MakeAvailable(spdlog)
 
 # Set the folder for the executable
 set(EXECUTABLE_OUTPUT_PATH ../)
