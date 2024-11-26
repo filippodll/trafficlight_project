@@ -477,11 +477,15 @@ int main(int argc, char* argv[]) {
   out << "time;n_agents;mean_speed;mean_speed_err;mean_density;mean_density_"
          "err;mean_flow;mean_flow_err;mean_traveltime;mean_traveltime_err\n";
   std::ofstream streetDensity(OUT_FOLDER + "densities.csv");
+  std::ofstream streetQueues(OUT_FOLDER + "queues.csv");
   streetDensity << "time";
+  streetQueues << "time";
   for (const auto& [id, street] : dynamics.graph().streetSet()) {
     streetDensity << ';' << id;
+    streetQueues << ';' << id;
   }
   streetDensity << std::endl;
+  streetQueues << std::endl;
 
   std::ofstream nodeDensity(OUT_FOLDER + "nodedensities.csv");
   nodeDensity << "time";
@@ -503,6 +507,8 @@ int main(int argc, char* argv[]) {
   std::map<dsm::Id, double> srcProbabilities, dstProbabilities;
 
   auto const& adjMatrix{dynamics.graph().adjMatrix()};
+
+  std::map<dsm::Id, data_t> synthetic_data;
 
   while (progress < MAX_TIME) {
     if (progress % GRANULARITY == 0) {
@@ -573,7 +579,11 @@ int main(int argc, char* argv[]) {
             if (outputCoils.contains(id)) {
               auto const nid = streets.at(id)->nodePair().second;
               if (!dstProbabilities.contains(nid)) {
+                if (!synthetic_data.contains(id)) {
+                  synthetic_data[id] = data_t(NDATAPOINTS, 0);
+                }
                 dstProbabilities[nid] = deltaPerRoad;
+                synthetic_data[id][current_index] = deltaPerRoad;
               }
             } else if (innerCoils.contains(id)) {
               if (synthetic_inner_data.contains(id)) {
@@ -586,7 +596,11 @@ int main(int argc, char* argv[]) {
             if (inputCoils.contains(id)) {
               auto const nid = streets.at(id)->nodePair().first;
               if (!srcProbabilities.contains(nid)) {
+                if (!synthetic_data.contains(id)) {
+                  synthetic_data[id] = data_t(NDATAPOINTS, 0);
+                }
                 srcProbabilities[nid] = 0.;
+                synthetic_data[id][current_index] = 0.;
               }
             } else if (innerCoils.contains(id)) {
               if (synthetic_inner_data.contains(id)) {
@@ -604,6 +618,10 @@ int main(int argc, char* argv[]) {
               auto const nid = streets.at(id)->nodePair().first;
               if (!srcProbabilities.contains(nid)) {
                 srcProbabilities[nid] = deltaPerRoad;
+                if (!synthetic_data.contains(id)) {
+                  synthetic_data[id] = data_t(NDATAPOINTS, 0);
+                }
+                synthetic_data[id][current_index] = deltaPerRoad;
               }
             } else if (innerCoils.contains(id)) {
               if (synthetic_inner_data.contains(id)) {
@@ -617,6 +635,10 @@ int main(int argc, char* argv[]) {
               auto const nid = streets.at(id)->nodePair().second;
               if (!dstProbabilities.contains(nid)) {
                 dstProbabilities[nid] = 0.;
+                if (!synthetic_data.contains(id)) {
+                  synthetic_data[id] = data_t(NDATAPOINTS, 0);
+                }
+                synthetic_data[id][current_index] = 0.;
               }
             } else if (innerCoils.contains(id)) {
               if (synthetic_inner_data.contains(id)) {
@@ -627,9 +649,6 @@ int main(int argc, char* argv[]) {
           }
         }
       }
-      // Erase nodes with no data
-      std::erase_if(srcProbabilities, [](const auto& pair) { return pair.second == 0.; });
-      std::erase_if(dstProbabilities, [](const auto& pair) { return pair.second == 0.; });
       if (dstProbabilities.size() == 1) {
         auto const [id, count] = *dstProbabilities.begin();
         if (srcProbabilities.contains(id)) {
@@ -658,21 +677,13 @@ int main(int argc, char* argv[]) {
             "Negative input {} or output {} weight sum", inputSum, outputSum);
         std::abort();
       }
-      if (inputSum > 0) {
-        for (auto& [id, count] : srcProbabilities) {
-          count /= inputSum;
-        }
-      } else {
+      if (inputSum == 0) {
         auto const size = srcProbabilities.size();
         for (auto& [id, weight] : srcProbabilities) {
           weight = 1. / size;
         }
       }
-      if (outputSum > 0) {
-        for (auto& [id, count] : dstProbabilities) {
-          count /= outputSum;
-        }
-      } else {
+      if (outputSum == 0) {
         auto const size = dstProbabilities.size();
         for (auto& [id, weight] : dstProbabilities) {
           weight = 1. / size;
@@ -701,15 +712,20 @@ int main(int argc, char* argv[]) {
       try {
         dynamics.addAgentsRandomly(nAgents, srcProbabilities, dstProbabilities);
       } catch (const std::exception& e) {
-        pConsoleLogger->error("Error adding agents: {}", e.what());
-        // for (auto const& [id, agent] : dynamics.agents()) {
-        //   std::cout << "Agent ID " << id << " srcNodeID " << agent->srcNodeId().value()
-        //             << " dstNodeID " << agent->itineraryId();
-        //   if (agent->streetId().has_value()) {
-        //     std::cout << " streetID " << agent->streetId().value();
-        //   }
-        //   std::cout << std::endl;
-        // }
+        pConsoleLogger->critical("Error adding agents: {}", e.what());
+        pConsoleLogger->info("There are still {} agents in the system.",
+                             dynamics.agents().size());
+        pConsoleLogger->info("Writing agent dump to file...");
+        std::ofstream agentDump(OUT_FOLDER + "agent_dump.csv");
+        agentDump << "id;src;dst;street\n";
+        for (auto const& [id, agent] : dynamics.agents()) {
+          agentDump << id << ';' << agent->srcNodeId().value() << ';'
+                    << agent->itineraryId() << ';';
+          if (agent->streetId().has_value()) {
+            agentDump << agent->streetId().value();
+          }
+          agentDump << std::endl;
+        }
         bExitFlag = true;
         break;
       }
@@ -748,10 +764,15 @@ int main(int argc, char* argv[]) {
 
     if (dynamics.time() % GRANULARITY == 0) {
       streetDensity << dynamics.time();
+      streetQueues << dynamics.time();
       for (const auto& [id, street] : dynamics.graph().streetSet()) {
         streetDensity << ';' << street->density(true);
+        streetQueues << ';'
+                     << static_cast<double>(street->nExitingAgents()) /
+                            street->capacity();
       }
       streetDensity << std::endl;
+      streetQueues << std::endl;
       nodeDensity << dynamics.time();
       for (const auto& [id, node] : dynamics.graph().nodeSet()) {
         nodeDensity << ';' << node->density();
@@ -762,12 +783,11 @@ int main(int argc, char* argv[]) {
     ++progress;
   }
 
-  pConsoleLogger->info("There are still {} agents in the system.",
-                       dynamics.agents().size());
   pConsoleLogger->info("Simulation ended at time {} / {}", dynamics.time(), MAX_TIME);
 
   outSpires.close();
   streetDensity.close();
+  streetQueues.close();
   nodeDensity.close();
   out.close();
 
@@ -775,7 +795,7 @@ int main(int argc, char* argv[]) {
 
   std::ofstream syntheticData(OUT_FOLDER + "synthetic_data.csv");
   syntheticData << "section;data\n";
-  for (auto const& [id, data] : inner_data) {
+  for (auto const& [id, data] : synthetic_data) {
     syntheticData << id << ';';
     for (auto const& d : data) {
       syntheticData << d << ' ';
