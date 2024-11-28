@@ -420,7 +420,7 @@ int main(int argc, char* argv[]) {
   std::map<dsm::Id, data_t> inner_data;
   int iValue;
   std::set<dsm::Id> const inputCoils{
-      1, 175, 190, 233, 254, 276, 297, 341, 363, 384, 427, 211, 406};
+      1, 175, 190, 233, 254, 276, 297, 341, 363, 384, 427, /**/ 211, 406};
   std::set<dsm::Id> const outputCoils{21, 30, 76, 155, 166, /**/ 53, 77, 99, 143};
   std::set<dsm::Id> const innerCoils{23, 43, 45, 65, 67, 87, 89, 109, 111, 131, 133, 153};
   while (std::getline(ifs, line)) {
@@ -457,36 +457,12 @@ int main(int argc, char* argv[]) {
       }
     } else if (innerCoils.contains(streetId)) {
       inner_data[streetId] = data_t(NDATAPOINTS, 0);
-      if (streetId == 87) {
-        inner_data[109] = data_t(NDATAPOINTS, 0);
-      }
-      if (streetId == 109) {
-        inner_data[87] = data_t(NDATAPOINTS, 0);
-      }
-      if (streetId == 67) {
-        inner_data[89] = data_t(NDATAPOINTS, 0);
-      }
-      if (streetId == 89) {
-        inner_data[67] = data_t(NDATAPOINTS, 0);
-      }
       for (size_t i = 0; i < NDATAPOINTS - 1; ++i) {
         iss >> iValue;
         if (iValue > 0) {
           inner_data[streetId][i] = iValue;
         } else {
           inner_data[streetId][i] = 0;
-        }
-        if (streetId == 87) {
-          inner_data[109][i] = inner_data[streetId][i];
-        }
-        if (streetId == 109) {
-          inner_data[87][i] = inner_data[streetId][i];
-        }
-        if (streetId == 67) {
-          inner_data[89][i] = inner_data[streetId][i];
-        }
-        if (streetId == 89) {
-          inner_data[67][i] = inner_data[streetId][i];
         }
       }
     }
@@ -510,7 +486,7 @@ int main(int argc, char* argv[]) {
   thread_t t([]() {
     while (progress < MAX_TIME && !bExitFlag) {
       printLoadingBar(progress, MAX_TIME);
-      std::this_thread::sleep_for(std::chrono::milliseconds(500));
+      std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
   });
   std::ofstream out(OUT_FOLDER + "data.csv");
@@ -625,7 +601,7 @@ int main(int argc, char* argv[]) {
                 dstProbabilities[nid] = deltaPerRoad;
                 synthetic_data[id][current_index] = deltaPerRoad;
               }
-            } else if (innerCoils.contains(id)) {
+            } else {
               if (synthetic_inner_data.contains(id)) {
                 std::cout << std::format("Inner coil {} already has data", id)
                           << std::endl;
@@ -643,7 +619,7 @@ int main(int argc, char* argv[]) {
                 srcProbabilities[nid] = 0.;
                 synthetic_data[id][current_index] = 0.;
               }
-            } else if (innerCoils.contains(id)) {
+            } else {
               if (synthetic_inner_data.contains(id)) {
                 std::cout << std::format("Inner coil {} already has data", id)
                           << std::endl;
@@ -653,26 +629,26 @@ int main(int argc, char* argv[]) {
           }
         } else if (deltaTOT < 0) {
           // Output > Input ===> Add agents to input
-          if (missingInput.contains(211) || missingInput.contains(406)) {
-            double sum = 0;
-            for (auto const& [streetId, _] : inputRoads) {
-              auto const& nid = streets.at(streetId)->nodePair().first;
-              if (srcProbabilities.contains(nid)) {
-                sum += streets.at(streetId)->nLanes();
-              }
-            }
-            for (auto const& [streetId, _] : inputRoads) {
-              auto const& nid = streets.at(streetId)->nodePair().first;
-              if (srcProbabilities.contains(nid)) {
-                // std::cout << std::format("Increasing flow from node {} from {} ", nid, srcProbabilities[nid]);
-                srcProbabilities[nid] += std::abs(static_cast<double>(deltaTOT)) *
-                                         streets.at(streetId)->nLanes() / sum;
-                // std::cout << std::format("to {}", srcProbabilities[nid]) << std::endl;
-              }
-            }
-          }
-          missingInput.erase(211);
-          missingInput.erase(406);
+          // if (missingInput.contains(211) || missingInput.contains(406)) {
+          //   int16_t sum = 0;
+          //   for (auto const& [streetId, _] : inputRoads) {
+          //     auto const& nid = streets.at(streetId)->nodePair().first;
+          //     if (srcProbabilities.contains(nid)) {
+          //       sum += streets.at(streetId)->nLanes();
+          //     }
+          //   }
+          //   for (auto const& [streetId, _] : inputRoads) {
+          //     auto const& nid = streets.at(streetId)->nodePair().first;
+          //     if (srcProbabilities.contains(nid)) {
+          //       // std::cout << std::format("Increasing flow from node {} from {} ", nid, srcProbabilities[nid]);
+          //       srcProbabilities[nid] += std::abs(static_cast<double>(deltaTOT)) *
+          //                                streets.at(streetId)->nLanes() / sum;
+          //       // std::cout << std::format("to {}", srcProbabilities[nid]) << std::endl;
+          //     }
+          //   }
+          // }
+          // missingInput.erase(211);
+          // missingInput.erase(406);
           auto const deltaPerRoad{std::abs(static_cast<double>(deltaTOT)) /
                                   missingInput.size()};
           for (auto const& id : missingInput) {
@@ -685,7 +661,7 @@ int main(int argc, char* argv[]) {
                 }
                 synthetic_data[id][current_index] = deltaPerRoad;
               }
-            } else if (innerCoils.contains(id)) {
+            } else {
               if (synthetic_inner_data.contains(id)) {
                 std::cout << std::format("Inner coil {} already has data", id)
                           << std::endl;
@@ -703,7 +679,7 @@ int main(int argc, char* argv[]) {
                 }
                 synthetic_data[id][current_index] = 0.;
               }
-            } else if (innerCoils.contains(id)) {
+            } else {
               if (synthetic_inner_data.contains(id)) {
                 std::cout << std::format("Inner coil {} already has data", id)
                           << std::endl;
@@ -714,12 +690,14 @@ int main(int argc, char* argv[]) {
         }
       }
       if (dstProbabilities.size() == 1) {
+        std::cout << "No buono, puoi arrivare in un nodo solo" << std::endl;
         auto const [id, count] = *dstProbabilities.begin();
         if (srcProbabilities.contains(id)) {
           srcProbabilities.erase(id);
         }
       }
       if (srcProbabilities.size() == 1) {
+        std::cout << "No buono, puoi partire da un nodo solo" << std::endl;
         auto const [id, count] = *srcProbabilities.begin();
         if (dstProbabilities.contains(id)) {
           dstProbabilities.erase(id);
@@ -878,16 +856,6 @@ int main(int argc, char* argv[]) {
     syntheticData << std::endl;
   }
   syntheticData.close();
-
-  auto const& myStreet = streets.at(175);
-  for (auto queueId = 0; queueId < myStreet->nLanes(); ++queueId) {
-    std::cout << std::format(
-                     "Queue {} has {} agents", queueId, myStreet->queue(queueId).size())
-              << std::endl;
-  }
-  std::cout << std::format("Exiting agents: {}", myStreet->nExitingAgents()) << std::endl;
-  std::cout << std::format("Moving agents: {}", myStreet->waitingAgents().size())
-            << std::endl;
 
 #ifdef __APPLE__
   t.join();
