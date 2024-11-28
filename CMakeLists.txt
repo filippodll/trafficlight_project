@@ -16,15 +16,6 @@ endif()
 
 find_package(dsm REQUIRED)
 
-include(FetchContent)
-# Get spdlog
-FetchContent_Declare(
-    spdlog
-    GIT_REPOSITORY https://github.com/gabime/spdlog.git
-    GIT_TAG v1.15.0
-)
-FetchContent_MakeAvailable(spdlog)
-
 # Set the folder for the executable
 set(EXECUTABLE_OUTPUT_PATH ../)
 
@@ -35,6 +26,6 @@ file(GLOB SOURCES "*.cpp")
 foreach(SOURCE ${SOURCES})
     get_filename_component(EXE_NAME ${SOURCE} NAME_WE)
 	add_executable(${EXE_NAME}.out ${SOURCE} ${SRC_SOURCES})
-    target_link_libraries(${EXE_NAME}.out PRIVATE dsm::dsm spdlog::spdlog)
+    target_link_libraries(${EXE_NAME}.out PRIVATE dsm::dsm)
     target_include_directories(${EXE_NAME}.out PRIVATE ../src/dsm/headers/ ../src/dsm/utility/TypeTraits/ ../src/dsm/utility/)
 endforeach()
