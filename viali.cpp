@@ -17,8 +17,6 @@
 #include <thread>
 namespace fs = std::filesystem;
 
-
-
 std::atomic<size_t> progress{0};
 std::atomic<bool> bExitFlag{false};
 
@@ -63,7 +61,6 @@ int main(int argc, char* argv[]) {
   std::string const DATA_FOLDER{argv[5]};       // folder containing the data files
   bool const OPTIMIZE{std::stoi(argv[6]) > 0};  // optimize the graph
 
-
   std::string const INPUT_FILE{std::format("{}/{}.csv", DATA_FOLDER, DAY)};
   std::string OUT_FOLDER{std::format("./{}", DAY)};
   if (OPTIMIZE) {
@@ -82,13 +79,10 @@ int main(int argc, char* argv[]) {
     fs::remove_all("./constants");
   }
   fs::create_directory("./constants");
-  std::cout << std::format("Using dsm version: {}", dsm::version())<< std::endl;
-  std::cout << std::format("Output folder: {}", OUT_FOLDER)<< std::endl;
+  std::cout << std::format("Using dsm version: {}", dsm::version()) << std::endl;
+  std::cout << std::format("Output folder: {}", OUT_FOLDER) << std::endl;
 
-  // Create the graph
-
-  TrafficLight tl1{1, 127}, tl2{2, 125}, tl3{3, 155}, tl4{4, 83}, tl5{5, 95}, tl6{6, 145}, tl7{7, 115};
-
+  std::cout << "Creating road segments..." << std::endl;
   // segmenti viali
   Street s0_1{
       1, 1, 500., 13.9, std::make_pair(0, 1), 3, "2.10 2.6 6 1"};  // (402) 2.10 2.6 6 1
@@ -220,82 +214,88 @@ int main(int argc, char* argv[]) {
                1,
                "0.127 4.41 6 1"};  // (263) 0.127 4.41 6 1
 
+  std::cout << "Creating traffic lights..." << std::endl;
   // saragozza
+  TrafficLight saragozza{1, 127};
+  saragozza.setCycle(s0_1.id(), dsm::Direction::STRAIGHT, {82, 0});
+  saragozza.setCycle(s0_1.id(), dsm::Direction::RIGHT, {112, 97});
 
-  tl1.setCycle(s0_1.id(), dsm::Direction::STRAIGHT , {82, 0});
-  tl1.setCycle(s0_1.id(), dsm::Direction::RIGHT , {112, 97});
+  saragozza.setCycle(s2_1.id(), dsm::Direction::STRAIGHT, {82, 0});
+  saragozza.setCycle(s2_1.id(), dsm::Direction::LEFT, {30, 82});
 
-  tl1.setCycle(s2_1.id(), dsm::Direction::STRAIGHT , {82, 0});
-  tl1.setCycle(s2_1.id(), dsm::Direction::LEFT , {30, 82});
-  
-  tl1.setCycle(s9_1.id(), dsm::Direction::RIGHT , {127, 0});
-  tl1.setCycle(s9_1.id(), dsm::Direction::STRAIGHT , {30, 97});
+  saragozza.setCycle(s9_1.id(), dsm::Direction::RIGHT, {127, 0});
+  saragozza.setCycle(s9_1.id(), dsm::Direction::STRAIGHT, {30, 97});
 
-  tl1.setCycle(s10_1.id(), dsm::Direction::ANY , {15, 82});
+  saragozza.setCycle(s10_1.id(), dsm::Direction::ANY, {15, 82});
 
-  
   // vallescura
-  tl2.setCycle(s1_2.id(), dsm::Direction::RIGHTANDSTRAIGHT , {78, 25});
+  TrafficLight vallescura{2, 125};
+  vallescura.setCycle(s1_2.id(), dsm::Direction::RIGHTANDSTRAIGHT, {78, 25});
 
-  tl2.setCycle(s3_2.id(), dsm::Direction::RIGHT , {100, 25});
+  vallescura.setCycle(s3_2.id(), dsm::Direction::RIGHT, {100, 25});
 
-  tl2.setCycle(s3_2.id(), dsm::Direction::LEFT , {22, 103});
+  vallescura.setCycle(s3_2.id(), dsm::Direction::LEFT, {22, 103});
 
-  tl2.setCycle(s11_2.id(), dsm::Direction::ANY , {25, 0});
-  tl2.setCycle(s12_2.id(), dsm::Direction::ANY , {25, 0});
+  vallescura.setCycle(s11_2.id(), dsm::Direction::ANY, {25, 0});
+  vallescura.setCycle(s12_2.id(), dsm::Direction::ANY, {25, 0});
   // san mamolo
-  tl3.setCycle(s2_3.id(), dsm::Direction::RIGHTANDSTRAIGHT , {85, 0});
+  TrafficLight sanmamolo{3, 155};
+  sanmamolo.setCycle(s2_3.id(), dsm::Direction::RIGHTANDSTRAIGHT, {85, 0});
 
-  tl3.setCycle(s4_3.id(), dsm::Direction::RIGHTANDSTRAIGHT , {120, 0});
-  tl3.setCycle(s4_3.id(), dsm::Direction::LEFT , {35, 85});
+  sanmamolo.setCycle(s4_3.id(), dsm::Direction::RIGHTANDSTRAIGHT, {120, 0});
+  sanmamolo.setCycle(s4_3.id(), dsm::Direction::LEFT, {35, 85});
 
-  tl3.setCycle(s13_3.id(), dsm::Direction::RIGHT , {130, 25});
-  tl3.setCycle(s13_3.id(), dsm::Direction::LEFTANDSTRAIGHT , {35, 120});
+  sanmamolo.setCycle(s13_3.id(), dsm::Direction::RIGHT, {130, 25});
+  sanmamolo.setCycle(s13_3.id(), dsm::Direction::LEFTANDSTRAIGHT, {35, 120});
 
-  tl3.setCycle(s14_3.id(), dsm::Direction::ANY , {35, 120});
-
+  sanmamolo.setCycle(s14_3.id(), dsm::Direction::ANY, {35, 120});
 
   // savenella
-  tl4.setCycle(s3_4.id(), dsm::Direction::STRAIGHT , {83, 0});
-  tl4.setCycle(s3_4.id(), dsm::Direction::LEFT , {30, 0});
+  TrafficLight savenella{4, 83};
+  savenella.setCycle(s3_4.id(), dsm::Direction::RIGHTANDSTRAIGHT, {83, 0});
+  savenella.setCycle(s3_4.id(), dsm::Direction::LEFT, {30, 0});
 
-  tl4.setCycle(s3_4.id(), dsm::Direction::RIGHTANDSTRAIGHT , {53, 30});
-
+  savenella.setCycle(s5_4.id(), dsm::Direction::ANY, {53, 30});
 
   // rubbiani
-  tl5.setCycle(s4_5.id(), dsm::Direction::STRAIGHT , {55, 0});
-  tl5.setCycle(s6_5.id(), dsm::Direction::STRAIGHT , {55, 0});
+  TrafficLight rubbiani{5, 95};
+  rubbiani.setCycle(s4_5.id(), dsm::Direction::STRAIGHT, {55, 0});
+  rubbiani.setCycle(s6_5.id(), dsm::Direction::STRAIGHT, {55, 0});
 
-  tl5.setCycle(s16_5.id(), dsm::Direction::ANY , {40, 55});
+  rubbiani.setCycle(s16_5.id(), dsm::Direction::ANY, {40, 55});
 
   // castiglione
-  tl6.setCycle(s5_6.id(), dsm::Direction::ANY , {60, 0});
+  TrafficLight castiglione{6, 145};
+  castiglione.setCycle(s5_6.id(), dsm::Direction::ANY, {60, 0});
 
-  tl6.setCycle(s7_6.id(), dsm::Direction::RIGHTANDSTRAIGHT , {85, 0});
-  tl6.setCycle(s5_6.id(), dsm::Direction::LEFT , {25, 60});
+  castiglione.setCycle(s7_6.id(), dsm::Direction::RIGHTANDSTRAIGHT, {85, 0});
+  castiglione.setCycle(s5_6.id(), dsm::Direction::LEFT, {25, 60});
 
-  tl6.setCycle(s17_6.id(), dsm::Direction::ANY , {60, 85});
-  tl6.setCycle(s18_6.id(), dsm::Direction::ANY , {60, 85});
-
+  castiglione.setCycle(s17_6.id(), dsm::Direction::ANY, {60, 85});
+  castiglione.setCycle(s18_6.id(), dsm::Direction::ANY, {60, 85});
 
   // santo stefano
-  tl7.setCycle(s6_7.id(), dsm::Direction::RIGHT , {90, 0});
-  tl7.setCycle(s6_7.id(), dsm::Direction::LEFTANDSTRAIGHT , {35, 0});
+  TrafficLight santostefano{7, 115};
+  santostefano.setCycle(s6_7.id(), dsm::Direction::RIGHT, {90, 0});
+  santostefano.setCycle(s6_7.id(), dsm::Direction::LEFTANDSTRAIGHT, {35, 0});
 
-  tl7.setCycle(s8_7.id(), dsm::Direction::RIGHTANDSTRAIGHT , {90, 0});
-  tl7.setCycle(s6_7.id(), dsm::Direction::LEFT , {55, 35});
+  santostefano.setCycle(s8_7.id(), dsm::Direction::RIGHTANDSTRAIGHT, {90, 0});
+  santostefano.setCycle(s8_7.id(), dsm::Direction::LEFT, {55, 35});
 
-  tl7.setCycle(s19_7.id(), dsm::Direction::ANY , {25, 90});
-  tl7.setCycle(s20_7.id(), dsm::Direction::ANY , {25, 90});
+  santostefano.setCycle(s19_7.id(), dsm::Direction::ANY, {25, 90});
+  santostefano.setCycle(s20_7.id(), dsm::Direction::ANY, {25, 90});
 
+  std::cout << "Creating graph..." << std::endl;
   dsm::Graph graph;
-  graph.addNode(std::make_unique<TrafficLight>(tl1));
-  graph.addNode(std::make_unique<TrafficLight>(tl2));
-  graph.addNode(std::make_unique<TrafficLight>(tl3));
-  graph.addNode(std::make_unique<TrafficLight>(tl4));
-  graph.addNode(std::make_unique<TrafficLight>(tl5));
-  graph.addNode(std::make_unique<TrafficLight>(tl6));
-  graph.addNode(std::make_unique<TrafficLight>(tl7));
+  std::cout << "Adding nodes..." << std::endl;
+  graph.addNode(std::make_unique<TrafficLight>(saragozza));
+  graph.addNode(std::make_unique<TrafficLight>(vallescura));
+  graph.addNode(std::make_unique<TrafficLight>(sanmamolo));
+  graph.addNode(std::make_unique<TrafficLight>(savenella));
+  graph.addNode(std::make_unique<TrafficLight>(rubbiani));
+  graph.addNode(std::make_unique<TrafficLight>(castiglione));
+  graph.addNode(std::make_unique<TrafficLight>(santostefano));
+  std::cout << "Adding streets..." << std::endl;
   graph.addStreets(s0_1,
                    s1_0,
                    s1_2,
@@ -362,12 +362,16 @@ int main(int argc, char* argv[]) {
   graph.makeSpireStreet(s20_7.id());
 
   graph.importCoordinates(IN_COORDS);
+  std::cout << "Building adjacency matrix..." << std::endl;
   graph.buildAdj();
+  std::cout << "Adjusting node capacities..." << std::endl;
   graph.adjustNodeCapacities();
+  std::cout << "Normalizing street capacities..." << std::endl;
   graph.normalizeStreetCapacities();
 
   graph.exportCoordinates("./constants/coords.csv");
 
+  std::cout << "Init input data preparation..." << std::endl;
   auto const& matrix{graph.adjMatrix()};
   auto const n{matrix.getColDim()};
   std::ofstream adj("./constants/adj.dat");
@@ -394,7 +398,7 @@ int main(int argc, char* argv[]) {
   // Create the dynamics
   Dynamics dynamics{graph};
   dynamics.setSeed(SEED);
-  dynamics.setMinSpeedRateo(0.95);
+  dynamics.setMinSpeedRateo(0.75);
   if (OPTIMIZE) {
     dynamics.setDataUpdatePeriod(INTERVAL_AGENTS_IN);
   }
@@ -403,10 +407,10 @@ int main(int argc, char* argv[]) {
 
   auto const& streets{dynamics.graph().streetSet()};
 
-  std::cout << std::format("Importing input data...")<< std::endl;
+  std::cout << std::format("Importing input data...") << std::endl;
   std::ifstream ifs(INPUT_FILE);
   if (!ifs) {
-    std::cout << std::format("Cannot open input file {}", INPUT_FILE)<<std::endl;
+    std::cout << std::format("Cannot open input file {}", INPUT_FILE) << std::endl;
     return 1;
   }
   std::string line;
@@ -416,16 +420,16 @@ int main(int argc, char* argv[]) {
   std::map<dsm::Id, data_t> inner_data;
   int iValue;
   std::set<dsm::Id> const inputCoils{
-      1, 175, 190, 233, 254, 276, 297, 341, 363, 384, 427, /**/ 211, 406};
+      1, 175, 190, 233, 254, 276, 297, 341, 363, 384, 427, 211, 406};
   std::set<dsm::Id> const outputCoils{21, 30, 76, 155, 166, /**/ 53, 77, 99, 143};
-  std::set<dsm::Id> const innerCoils{23, 43, 45, 65, 67, 87, 68, 109, 111, 131, 133, 153};
+  std::set<dsm::Id> const innerCoils{23, 43, 45, 65, 67, 87, 89, 109, 111, 131, 133, 153};
   while (std::getline(ifs, line)) {
     std::istringstream iss(line);
     std::string token;
 
     std::getline(iss, token, ';');
     if (!coilmap.contains(token)) {
-      std::cout << std::format("Unknown coil {}. Skipping.", token)<<std::endl;
+      std::cout << std::format("Unknown coil {}. Skipping.", token) << std::endl;
       continue;
     }
     dsm::Id streetId = coilmap.at(token);
@@ -459,6 +463,12 @@ int main(int argc, char* argv[]) {
       if (streetId == 109) {
         inner_data[87] = data_t(NDATAPOINTS, 0);
       }
+      if (streetId == 67) {
+        inner_data[89] = data_t(NDATAPOINTS, 0);
+      }
+      if (streetId == 89) {
+        inner_data[67] = data_t(NDATAPOINTS, 0);
+      }
       for (size_t i = 0; i < NDATAPOINTS - 1; ++i) {
         iss >> iValue;
         if (iValue > 0) {
@@ -472,13 +482,19 @@ int main(int argc, char* argv[]) {
         if (streetId == 109) {
           inner_data[87][i] = inner_data[streetId][i];
         }
+        if (streetId == 67) {
+          inner_data[89][i] = inner_data[streetId][i];
+        }
+        if (streetId == 89) {
+          inner_data[67][i] = inner_data[streetId][i];
+        }
       }
     }
   }
   ifs.close();
 
-  std::cout << std::format("Input data imported")<<std::endl;
-  std::cout << std::format("Creating itineraries")<<std::endl;
+  std::cout << std::format("Input data imported") << std::endl;
+  std::cout << std::format("Creating itineraries") << std::endl;
 
   std::vector<dsm::Id> outNodeList;
   outNodeList.reserve(output_data.size());
@@ -488,7 +504,7 @@ int main(int argc, char* argv[]) {
   }
   dynamics.setDestinationNodes(outNodeList);
 
-  std::cout << std::format("Destination nodes set")<<std::endl;
+  std::cout << std::format("Destination nodes set") << std::endl;
 
   // launch progress bar
   thread_t t([]() {
@@ -584,13 +600,13 @@ int main(int argc, char* argv[]) {
         auto const deltaTOT{inputCounts - outputCounts};
         if (deltaTOT == 0) {
           continue;
-        } else {
-          std::cout << std::format(
-              "Node {} has an overall delta of {}. Missing {} inputs and {} outputs.",
-              nodeId,
-              deltaTOT,
-              missingInput.size(),
-              missingOutput.size())<<std::endl;
+          // } else {
+          // std::cout << std::format(
+          //     "Node {} has an overall delta of {}. Missing {} inputs and {} outputs.",
+          //     nodeId,
+          //     deltaTOT,
+          //     missingInput.size(),
+          //     missingOutput.size())<<std::endl;
         }
         ////////////////////////
         // Balance the nodes  //
@@ -611,7 +627,8 @@ int main(int argc, char* argv[]) {
               }
             } else if (innerCoils.contains(id)) {
               if (synthetic_inner_data.contains(id)) {
-                std::cout << std::format("Inner coil {} already has data", id)<<std::endl;
+                std::cout << std::format("Inner coil {} already has data", id)
+                          << std::endl;
               }
               synthetic_inner_data[id] = deltaPerRoad;
             }
@@ -628,13 +645,34 @@ int main(int argc, char* argv[]) {
               }
             } else if (innerCoils.contains(id)) {
               if (synthetic_inner_data.contains(id)) {
-                std::cout << std::format("Inner coil {} already has data", id)<<std::endl;
+                std::cout << std::format("Inner coil {} already has data", id)
+                          << std::endl;
               }
               synthetic_inner_data[id] = 0.;
             }
           }
         } else if (deltaTOT < 0) {
           // Output > Input ===> Add agents to input
+          if (missingInput.contains(211) || missingInput.contains(406)) {
+            double sum = 0;
+            for (auto const& [streetId, _] : inputRoads) {
+              auto const& nid = streets.at(streetId)->nodePair().first;
+              if (srcProbabilities.contains(nid)) {
+                sum += streets.at(streetId)->nLanes();
+              }
+            }
+            for (auto const& [streetId, _] : inputRoads) {
+              auto const& nid = streets.at(streetId)->nodePair().first;
+              if (srcProbabilities.contains(nid)) {
+                // std::cout << std::format("Increasing flow from node {} from {} ", nid, srcProbabilities[nid]);
+                srcProbabilities[nid] += std::abs(static_cast<double>(deltaTOT)) *
+                                         streets.at(streetId)->nLanes() / sum;
+                // std::cout << std::format("to {}", srcProbabilities[nid]) << std::endl;
+              }
+            }
+          }
+          missingInput.erase(211);
+          missingInput.erase(406);
           auto const deltaPerRoad{std::abs(static_cast<double>(deltaTOT)) /
                                   missingInput.size()};
           for (auto const& id : missingInput) {
@@ -649,7 +687,8 @@ int main(int argc, char* argv[]) {
               }
             } else if (innerCoils.contains(id)) {
               if (synthetic_inner_data.contains(id)) {
-                std::cout << std::format("Inner coil {} already has data", id)<<std::endl;
+                std::cout << std::format("Inner coil {} already has data", id)
+                          << std::endl;
               }
               synthetic_inner_data[id] = deltaPerRoad;
             }
@@ -666,7 +705,8 @@ int main(int argc, char* argv[]) {
               }
             } else if (innerCoils.contains(id)) {
               if (synthetic_inner_data.contains(id)) {
-                std::cout << std::format("Inner coil {} already has data", id)<<std::endl;
+                std::cout << std::format("Inner coil {} already has data", id)
+                          << std::endl;
               }
               synthetic_inner_data[id] = 0.;
             }
@@ -698,7 +738,8 @@ int main(int argc, char* argv[]) {
           [](double acc, const auto& pair) { return acc + pair.second; })};
       if (inputSum < 0 || outputSum < 0) {
         std::cout << std::format(
-            "Negative input {} or output {} weight sum", inputSum, outputSum)<<std::endl;
+                         "Negative input {} or output {} weight sum", inputSum, outputSum)
+                  << std::endl;
         std::abort();
       }
       if (inputSum == 0) {
@@ -712,22 +753,29 @@ int main(int argc, char* argv[]) {
         for (auto& [id, weight] : dstProbabilities) {
           weight = 1. / size;
         }
-        std::cout << std::format("No output data for time {}, using uniform distribution.",
-                             dynamics.time())<<std::endl;
+        std::cout << std::format(
+                         "No output data for time {}, using uniform distribution.",
+                         dynamics.time())
+                  << std::endl;
       }
       ++current_index;
       if (srcProbabilities.empty()) {
-        std::cout << std::format("No input data for time {}", dynamics.time())<<std::endl;
+        std::cout << std::format("No input data for time {}", dynamics.time())
+                  << std::endl;
         nAgents = 0;
       } else {
         auto const oldValue = nAgents;
         auto const scaleFactor{static_cast<double>(GRANULARITY) / INTERVAL_AGENTS_IN};
         nAgents /= scaleFactor;
-        std::cout << std::format(
-            "Time: {}, nAgents: {} -> {}", dynamics.time(), oldValue, nAgents)<<std::endl;
+        // std::cout << std::format("Time: {}, nAgents: {} -> {}",
+        //                          dynamics.time(),
+        //                          oldValue,
+        //                          nAgents)
+        //           << std::endl;
       }
       if (dstProbabilities.empty()) {
-        std::cout << std::format("No output data for time {}", dynamics.time())<<std::endl;
+        std::cout << std::format("No output data for time {}", dynamics.time())
+                  << std::endl;
       }
     }
     // EVOLUTION   -   -   -
@@ -736,15 +784,17 @@ int main(int argc, char* argv[]) {
       try {
         dynamics.addAgentsRandomly(nAgents, srcProbabilities, dstProbabilities);
       } catch (const std::exception& e) {
-        std::cout << std::format("Error adding agents: {}", e.what())<<std::endl;
+        std::cout << std::format("Error adding agents: {}", e.what()) << std::endl;
         std::cout << std::format("There are still {} agents in the system.",
-                             dynamics.agents().size())<<std::endl;
-        std::cout << std::format("Writing agent dump to file...")<<std::endl;
+                                 dynamics.agents().size())
+                  << std::endl;
+        std::cout << std::format("Writing agent dump to file...") << std::endl;
         std::ofstream agentDump(OUT_FOLDER + "agent_dump.csv");
-        agentDump << "id;src;dst;street\n";
+        agentDump << "id;src;dst;delay;street\n";
         for (auto const& [id, agent] : dynamics.agents()) {
           agentDump << id << ';' << agent->srcNodeId().value() << ';'
                     << agent->itineraryId() << ';';
+          agentDump << static_cast<int>(agent->delay()) << ';';
           if (agent->streetId().has_value()) {
             agentDump << agent->streetId().value();
           }
@@ -807,7 +857,8 @@ int main(int argc, char* argv[]) {
     ++progress;
   }
 
-  std::cout << std::format("Simulation ended at time {} / {}", dynamics.time(), MAX_TIME)<<std::endl;
+  std::cout << std::format("Simulation ended at time {} / {}", dynamics.time(), MAX_TIME)
+            << std::endl;
 
   outSpires.close();
   streetDensity.close();
@@ -815,7 +866,7 @@ int main(int argc, char* argv[]) {
   nodeDensity.close();
   out.close();
 
-  std::cout << std::format("Writing synthetic data to file...")<<std::endl;
+  std::cout << std::format("Writing synthetic data to file...") << std::endl;
 
   std::ofstream syntheticData(OUT_FOLDER + "synthetic_data.csv");
   syntheticData << "section;data\n";
@@ -827,6 +878,16 @@ int main(int argc, char* argv[]) {
     syntheticData << std::endl;
   }
   syntheticData.close();
+
+  auto const& myStreet = streets.at(175);
+  for (auto queueId = 0; queueId < myStreet->nLanes(); ++queueId) {
+    std::cout << std::format(
+                     "Queue {} has {} agents", queueId, myStreet->queue(queueId).size())
+              << std::endl;
+  }
+  std::cout << std::format("Exiting agents: {}", myStreet->nExitingAgents()) << std::endl;
+  std::cout << std::format("Moving agents: {}", myStreet->waitingAgents().size())
+            << std::endl;
 
 #ifdef __APPLE__
   t.join();
