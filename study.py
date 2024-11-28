@@ -35,9 +35,9 @@ if __name__ == "__main__":
 
     df_diff = pd.DataFrame()
     df_diff["time"] = np.convolve(df_synth["time"].to_list(), np.ones((12,)) / 12, mode="full")
+    # df_diff["time"] = df_synth["time"]
     # restrict df_diff in 8*12:20*12
     df_diff = df_diff[8 * 12 : 20 * 12]
-    # df_diff["time"] = df_synth["time"]
     df_in = pd.DataFrame()
 
     df_validation = pd.DataFrame()
@@ -67,7 +67,7 @@ if __name__ == "__main__":
 
                 data_real = np.convolve(data_real, np.ones((12,)) / 12, mode="full")
                 data_synth = np.convolve(data_synth, np.ones((12,)) / 12, mode="full")
-                # data_real = np.array([1 if d == 0 else d for d in data_real])
+                data_real = np.array([1 if d == 0 else d for d in data_real])
                 diff = np.subtract(
                     data_real, data_synth
                 )  # [d * 65672 / 85619 for d in data_real]
@@ -95,7 +95,7 @@ if __name__ == "__main__":
         print(f"Coil {int(id) // args.n_nodes} -> {int(id) % args.n_nodes} - Mean relative error: {df_diff[id].mean(axis=0):.2f}%")
     df_diff["mean"] = df_diff.mean(axis=1)
     print(f"Total mean relative error: {df_diff["mean"].mean(axis=0):.2f}%")
-    df_diff.to_csv(f"{args.day}-diff.csv", index=False, sep=";")
+    # df_diff.to_csv(f"{args.day}-diff.csv", index=False, sep=";")
 
     print()
     print(f"Total input: {tot_input}, Total output: {tot_output}")
@@ -130,7 +130,7 @@ if __name__ == "__main__":
     except FileNotFoundError:
         pass
 
-    # # plot mean_traveltime over mean_density for df_data
+    # plot mean_traveltime over mean_density for df_data
     # plt.scatter(df_data["mean_density"], df_data["mean_traveltime"], label="Normal")
     # if df_opt is not None:
     #     plt.scatter(
