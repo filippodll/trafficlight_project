@@ -217,23 +217,22 @@ int main(int argc, char* argv[]) {
   std::cout << "Creating traffic lights..." << std::endl;
   // saragozza
   TrafficLight saragozza{1, 127};
-  saragozza.setCycle(s0_1.id(), dsm::Direction::STRAIGHT, {82, 0});
+  saragozza.setCycle(s0_1.id(), dsm::Direction::LEFTANDSTRAIGHT, {82, 0});
   saragozza.setCycle(s0_1.id(), dsm::Direction::RIGHT, {112, 97});
 
-  saragozza.setCycle(s2_1.id(), dsm::Direction::STRAIGHT, {82, 0});
+  saragozza.setCycle(s2_1.id(), dsm::Direction::RIGHTANDSTRAIGHT, {82, 0});
   saragozza.setCycle(s2_1.id(), dsm::Direction::LEFT, {30, 82});
 
   saragozza.setCycle(s9_1.id(), dsm::Direction::RIGHT, {127, 0});
-  saragozza.setCycle(s9_1.id(), dsm::Direction::STRAIGHT, {30, 97});
+  saragozza.setCycle(s9_1.id(), dsm::Direction::LEFTANDSTRAIGHT, {30, 97});
 
   saragozza.setCycle(s10_1.id(), dsm::Direction::ANY, {15, 82});
 
   // vallescura
   TrafficLight vallescura{2, 125};
-  vallescura.setCycle(s1_2.id(), dsm::Direction::RIGHTANDSTRAIGHT, {78, 25});
+  vallescura.setCycle(s1_2.id(), dsm::Direction::ANY, {78, 25});
 
-  vallescura.setCycle(s3_2.id(), dsm::Direction::RIGHT, {100, 25});
-
+  vallescura.setCycle(s3_2.id(), dsm::Direction::RIGHTANDSTRAIGHT, {100, 25});
   vallescura.setCycle(s3_2.id(), dsm::Direction::LEFT, {22, 103});
 
   vallescura.setCycle(s11_2.id(), dsm::Direction::ANY, {25, 0});
@@ -259,8 +258,8 @@ int main(int argc, char* argv[]) {
 
   // rubbiani
   TrafficLight rubbiani{5, 95};
-  rubbiani.setCycle(s4_5.id(), dsm::Direction::STRAIGHT, {55, 0});
-  rubbiani.setCycle(s6_5.id(), dsm::Direction::STRAIGHT, {55, 0});
+  rubbiani.setCycle(s4_5.id(), dsm::Direction::ANY, {55, 0});
+  rubbiani.setCycle(s6_5.id(), dsm::Direction::ANY, {55, 0});
 
   rubbiani.setCycle(s16_5.id(), dsm::Direction::ANY, {40, 55});
 
@@ -386,19 +385,25 @@ int main(int argc, char* argv[]) {
 
   std::unordered_map<std::string_view, dsm::Id> coilmap;
   std::ofstream dict("./structures_out.py");
-  dict << "COIL_DICT = {\n";
+  dict << "COIL_DICT = {" << std::endl;
   for (auto const& [id, street] : graph.streetSet()) {
     if (street->isSpire()) {
       dict << '\"' << street->name() << "\": " << id << ",\n";  // Python dictionary
       coilmap[street->name()] = id;
     }
   }
-  dict << "}\n";
+  dict << '}' << std::endl;
+  // Now append a dict with streetId: street name
+  dict << "NAME_DICT = {" << std::endl;
+  for (auto const& [id, street] : graph.streetSet()) {
+    dict << id << ": \"" << street->name() << "\",\n";  // Python dictionary
+  }
+  dict << '}' << std::endl;
   dict.close();
   // Create the dynamics
   Dynamics dynamics{graph};
   dynamics.setSeed(SEED);
-  dynamics.setMinSpeedRateo(0.75);
+  dynamics.setMinSpeedRateo(0.95);
   if (OPTIMIZE) {
     dynamics.setDataUpdatePeriod(INTERVAL_AGENTS_IN);
   }
@@ -587,107 +592,87 @@ int main(int argc, char* argv[]) {
         ////////////////////////
         // Balance the nodes  //
         ////////////////////////
-        if (deltaTOT > 0) {
-          // Input > Output ===> Add agents to output
-          auto const deltaPerRoad{std::abs(static_cast<double>(deltaTOT)) /
-                                  missingOutput.size()};
-          for (auto const& id : missingOutput) {
-            if (outputCoils.contains(id)) {
-              auto const nid = streets.at(id)->nodePair().second;
-              if (!dstProbabilities.contains(nid)) {
-                if (!synthetic_data.contains(id)) {
-                  synthetic_data[id] = data_t(NDATAPOINTS, 0);
-                }
-                dstProbabilities[nid] = deltaPerRoad;
-                synthetic_data[id][current_index] = deltaPerRoad;
-              }
-            } else {
-              if (synthetic_inner_data.contains(id)) {
-                std::cout << std::format("Inner coil {} already has data", id)
-                          << std::endl;
-              }
-              synthetic_inner_data[id] = deltaPerRoad;
-            }
-          }
-          for (auto const& id : missingInput) {
-            if (inputCoils.contains(id)) {
-              auto const nid = streets.at(id)->nodePair().first;
-              if (!srcProbabilities.contains(nid)) {
-                if (!synthetic_data.contains(id)) {
-                  synthetic_data[id] = data_t(NDATAPOINTS, 0);
-                }
-                srcProbabilities[nid] = 0.;
-                synthetic_data[id][current_index] = 0.;
-              }
-            } else {
-              if (synthetic_inner_data.contains(id)) {
-                std::cout << std::format("Inner coil {} already has data", id)
-                          << std::endl;
-              }
-              synthetic_inner_data[id] = 0.;
-            }
-          }
-        } else if (deltaTOT < 0) {
-          // Output > Input ===> Add agents to input
-          // if (missingInput.contains(211) || missingInput.contains(406)) {
-          //   int16_t sum = 0;
-          //   for (auto const& [streetId, _] : inputRoads) {
-          //     auto const& nid = streets.at(streetId)->nodePair().first;
-          //     if (srcProbabilities.contains(nid)) {
-          //       sum += streets.at(streetId)->nLanes();
-          //     }
-          //   }
-          //   for (auto const& [streetId, _] : inputRoads) {
-          //     auto const& nid = streets.at(streetId)->nodePair().first;
-          //     if (srcProbabilities.contains(nid)) {
-          //       // std::cout << std::format("Increasing flow from node {} from {} ", nid, srcProbabilities[nid]);
-          //       srcProbabilities[nid] += std::abs(static_cast<double>(deltaTOT)) *
-          //                                streets.at(streetId)->nLanes() / sum;
-          //       // std::cout << std::format("to {}", srcProbabilities[nid]) << std::endl;
-          //     }
-          //   }
-          // }
-          // missingInput.erase(211);
-          // missingInput.erase(406);
-          auto const deltaPerRoad{std::abs(static_cast<double>(deltaTOT)) /
-                                  missingInput.size()};
-          for (auto const& id : missingInput) {
-            if (inputCoils.contains(id)) {
-              auto const nid = streets.at(id)->nodePair().first;
-              if (!srcProbabilities.contains(nid)) {
-                srcProbabilities[nid] = deltaPerRoad;
-                if (!synthetic_data.contains(id)) {
-                  synthetic_data[id] = data_t(NDATAPOINTS, 0);
-                }
-                synthetic_data[id][current_index] = deltaPerRoad;
-              }
-            } else {
-              if (synthetic_inner_data.contains(id)) {
-                std::cout << std::format("Inner coil {} already has data", id)
-                          << std::endl;
-              }
-              synthetic_inner_data[id] = deltaPerRoad;
-            }
-          }
-          for (auto const& id : missingOutput) {
-            if (outputCoils.contains(id)) {
-              auto const nid = streets.at(id)->nodePair().second;
-              if (!dstProbabilities.contains(nid)) {
-                dstProbabilities[nid] = 0.;
-                if (!synthetic_data.contains(id)) {
-                  synthetic_data[id] = data_t(NDATAPOINTS, 0);
-                }
-                synthetic_data[id][current_index] = 0.;
-              }
-            } else {
-              if (synthetic_inner_data.contains(id)) {
-                std::cout << std::format("Inner coil {} already has data", id)
-                          << std::endl;
-              }
-              synthetic_inner_data[id] = 0.;
-            }
-          }
-        }
+        // if (deltaTOT > 0) {
+        //   // Input > Output ===> Add agents to output
+        //   auto const deltaPerRoad{std::abs(static_cast<double>(deltaTOT)) /
+        //                           missingOutput.size()};
+        //   for (auto const& id : missingOutput) {
+        //     if (outputCoils.contains(id)) {
+        //       auto const nid = streets.at(id)->nodePair().second;
+        //       if (!dstProbabilities.contains(nid)) {
+        //         if (!synthetic_data.contains(id)) {
+        //           synthetic_data[id] = data_t(NDATAPOINTS, 0);
+        //         }
+        //         dstProbabilities[nid] = deltaPerRoad;
+        //         synthetic_data[id][current_index] = deltaPerRoad;
+        //       }
+        //     } else {
+        //       if (synthetic_inner_data.contains(id)) {
+        //         std::cout << std::format("Inner coil {} already has data", id)
+        //                   << std::endl;
+        //       }
+        //       synthetic_inner_data[id] = deltaPerRoad;
+        //     }
+        //   }
+        //   for (auto const& id : missingInput) {
+        //     if (inputCoils.contains(id)) {
+        //       auto const nid = streets.at(id)->nodePair().first;
+        //       if (!srcProbabilities.contains(nid)) {
+        //         if (!synthetic_data.contains(id)) {
+        //           synthetic_data[id] = data_t(NDATAPOINTS, 0);
+        //         }
+        //         srcProbabilities[nid] = 0.;
+        //         synthetic_data[id][current_index] = 0.;
+        //       }
+        //     } else {
+        //       if (synthetic_inner_data.contains(id)) {
+        //         std::cout << std::format("Inner coil {} already has data", id)
+        //                   << std::endl;
+        //       }
+        //       synthetic_inner_data[id] = 0.;
+        //     }
+        //   }
+        // } else if (deltaTOT < 0) {
+        //   // Output > Input ===> Add agents to input
+        //   auto const deltaPerRoad{std::abs(static_cast<double>(deltaTOT)) /
+        //                           missingInput.size()};
+        //   for (auto const& id : missingInput) {
+        //     if (inputCoils.contains(id)) {
+        //       auto const nid = streets.at(id)->nodePair().first;
+        //       if (!srcProbabilities.contains(nid)) {
+        //         srcProbabilities[nid] = deltaPerRoad;
+        //         if (!synthetic_data.contains(id)) {
+        //           synthetic_data[id] = data_t(NDATAPOINTS, 0);
+        //         }
+        //         synthetic_data[id][current_index] = deltaPerRoad;
+        //       }
+        //     } else {
+        //       if (synthetic_inner_data.contains(id)) {
+        //         std::cout << std::format("Inner coil {} already has data", id)
+        //                   << std::endl;
+        //       }
+        //       synthetic_inner_data[id] = deltaPerRoad;
+        //     }
+        //   }
+        //   for (auto const& id : missingOutput) {
+        //     if (outputCoils.contains(id)) {
+        //       auto const nid = streets.at(id)->nodePair().second;
+        //       if (!dstProbabilities.contains(nid)) {
+        //         dstProbabilities[nid] = 0.;
+        //         if (!synthetic_data.contains(id)) {
+        //           synthetic_data[id] = data_t(NDATAPOINTS, 0);
+        //         }
+        //         synthetic_data[id][current_index] = 0.;
+        //       }
+        //     } else {
+        //       if (synthetic_inner_data.contains(id)) {
+        //         std::cout << std::format("Inner coil {} already has data", id)
+        //                   << std::endl;
+        //       }
+        //       synthetic_inner_data[id] = 0.;
+        //     }
+        //   }
+        // }
       }
       if (dstProbabilities.size() == 1) {
         std::cout << "No buono, puoi arrivare in un nodo solo" << std::endl;

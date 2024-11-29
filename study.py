@@ -65,23 +65,28 @@ if __name__ == "__main__":
             if len(data_real) == len(data_synth):
                 mean_diff = None
 
+                print(f"Coil {idx // args.n_nodes} -> {idx % args.n_nodes}: {sum(data_real)} vs {sum(data_synth)}")
+
                 data_real = np.convolve(data_real, np.ones((12,)) / 12, mode="full")
                 data_synth = np.convolve(data_synth, np.ones((12,)) / 12, mode="full")
-                data_real = np.array([1 if d == 0 else d for d in data_real])
                 diff = np.subtract(
                     data_real, data_synth
-                )  # [d * 65672 / 85619 for d in data_real]
+                )
                 if mean_diff is None:
                     mean_diff = diff
                 else:
                     mean_diff += diff
-                # substitue zeros with one in data_real
-                diff = diff / data_real
-                diff = diff[8 * 12 : 20 * 12]
+                # substitue zeros with one in data_real 
+                diff = diff  / np.array([1 if d == 0 else d for d in data_real])
+                diff = diff[8 * 12 : 20 * 12] * 100
                 df_diff[str(idx)] = diff
                 # diff = diff * 65 / 85
+                # x labels: one point every 5 minutes from 8:00 to 20:00
+                x = np.arange(8 * 12, 20 * 12)
+                # convert into time
+                x = [f"{int(t // 12):02d}:{int(t % 12) * 5:02d}" for t in x]
                 plt.plot(
-                    diff, label=f"Coil {idx // args.n_nodes} -> {idx % args.n_nodes}"
+                    x, diff, label=f"Coil {idx // args.n_nodes} -> {idx % args.n_nodes}"
                 )
 
         elif int(idx) in INNER_COILS:
@@ -105,9 +110,13 @@ if __name__ == "__main__":
     print(f"Total inner: {tot_inner}")
     print(f"Total inner synth: {tot_inner_synth}")
 
-    plt.title("Real data - Synthetic data")
+    plt.title(f"{args.day}\nDifference between output REAL and SIMULATED data - media oraria")
+    # show only one in 12 ticks
+    plt.xticks(np.arange(0, len(df_diff), 6), rotation=45)
+    # make a grid with dashed lines
+    plt.grid(linestyle="--")
     plt.xlabel("Simulation time")
-    plt.ylabel("Difference")
+    plt.ylabel("Relative error (%)")
     plt.legend()
     plt.show()
 
@@ -130,7 +139,7 @@ if __name__ == "__main__":
     except FileNotFoundError:
         pass
 
-    # plot mean_traveltime over mean_density for df_data
+    # # plot mean_traveltime over mean_density for df_data
     # plt.scatter(df_data["mean_density"], df_data["mean_traveltime"], label="Normal")
     # if df_opt is not None:
     #     plt.scatter(
