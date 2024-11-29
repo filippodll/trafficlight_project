@@ -1,7 +1,7 @@
 viali: 
 	clear
 	cmake -B build -DCMAKE_BUILD_TYPE=Release && make -C build
-	./viali.out 69 2023-05-26 300 1 ./may23 0
+	./viali.out 69 2024-06-12 300 1 ./data 0
 viali_debug: 
 	clear
 	cmake -B build -DCMAKE_BUILD_TYPE=Debug && make -C build
@@ -11,6 +11,6 @@ gifter:
 	curl ascii.live/rick
 video:
 	clear
-	python ../DynamicalSystemFramework/utils/videomaker.py --densities ./2023-05-30/densities.csv --day 2023-05-30 --fps 3 --use-basemap 1 --adj-matrix ./constants/adj.dat --coordinates ./constants/coords.csv
+	python ../DynamicalSystemFramework/utils/videomaker.py --densities ./2023-05-26/densities.csv --day 2023-05-26 --fps 5 --use-basemap 1 --adj-matrix ./constants/adj.dat --coordinates ./constants/coords.csv
 study:
-	python study.py --day 2023-05-21 --n-nodes 21 --input-folder ./may23
+	python study.py --day 2023-05-09 --n-nodes 21 --input-folder ./data
