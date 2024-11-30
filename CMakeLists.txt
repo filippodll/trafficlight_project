@@ -15,18 +15,17 @@ elseif (CMAKE_BUILD_TYPE STREQUAL "Release")
 endif()
 
 find_package(dsm REQUIRED)
+
 # Set the folder for the executable
 set(EXECUTABLE_OUTPUT_PATH ../)
 
 # add as executable all cpp files into '.' folder
 file(GLOB SOURCES "*.cpp")
 
-
-
 # Loop through each source file and create an executable
 foreach(SOURCE ${SOURCES})
     get_filename_component(EXE_NAME ${SOURCE} NAME_WE)
 	add_executable(${EXE_NAME}.out ${SOURCE} ${SRC_SOURCES})
     target_link_libraries(${EXE_NAME}.out PRIVATE dsm::dsm)
-    target_include_directories(${EXE_NAME}.out PRIVATE ../src/dsm/headers/ ../src/dsm/utility/TypeTraits/)
+    target_include_directories(${EXE_NAME}.out PRIVATE ../src/dsm/headers/ ../src/dsm/utility/TypeTraits/ ../src/dsm/utility/)
 endforeach()

@@ -1,0 +1,11 @@
+# Foders
+__pycache__
+.vscode
+build
+temp_img
+
+# File types
+*.csv
+*.dat
+*.out
+*.mp4
