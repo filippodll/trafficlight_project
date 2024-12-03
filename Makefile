@@ -1,7 +1,7 @@
 viali: 
 	clear
 	cmake -B build -DCMAKE_BUILD_TYPE=Release && make -C build
-	./viali.out 69 2023-05-01 300 1 ./signal 100 2 0.3 0.8
+	./viali.out 69 2023-05-22 300 1 ./signal 100 2 0.35 0.7
 viali_debug: 
 	clear
 	cmake -B build -DCMAKE_BUILD_TYPE=Debug && make -C build
@@ -13,4 +13,4 @@ video:
 	clear
 	python ../DynamicalSystemFramework/utils/videomaker.py --densities ./2023-05-26/densities.csv --day 2023-05-26 --fps 5 --use-basemap 1 --adj-matrix ./constants/adj.dat --coordinates ./constants/coords.csv
 study:
-	python study.py --day 2023-05-01 --n-nodes 21 --input-folder ./signal
+	python study.py --day 2023-05-22 --n-nodes 21 --input-folder ./signal

@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 from structures_out import COIL_DICT
 
+# plt.rcParams['text.usetex'] = True
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -129,53 +131,72 @@ if __name__ == "__main__":
     # plt.show()
 
     df_data = pd.read_csv(f"./output/{args.day}/data.csv", sep=";")
+    df_data["time"] = df_data["time"] // 300  # Each point is 5 minutes
+    df_data["mean_density"] = df_data["mean_density"] * 1000  # convert to veh/km
     # if exists ./{args.day}-optimized/data.csv import it
     df_opt_single = None
     df_opt_double = None
     try:
         df_opt_single = pd.read_csv(f"./output/{args.day}-single/data.csv", sep=";")
+        df_opt_single["time"] = df_opt_single["time"] // 300
+        df_opt_single["mean_density"] = df_opt_single["mean_density"] * 1000
     except FileNotFoundError:
         print(f"No optimized data found for {args.day}")
     try:
         df_opt_double = pd.read_csv(f"./output/{args.day}-double/data.csv", sep=";")
+        df_opt_double["time"] = df_opt_double["time"] // 300
+        df_opt_double["mean_density"] = df_opt_double["mean_density"] * 1000
     except FileNotFoundError:
         print(f"No optimized data found for {args.day}")
 
-    # plot mean_traveltime over mean_density for df_data
-    plt.scatter(
-        df_data["mean_density"] * 1000, df_data["mean_traveltime"], label="Normal"
-    )
+    ########################################################################################
+    # Plot the mean travel time over the mean density
+    ########################################################################################
+    plt.scatter(df_data["mean_density"], df_data["mean_traveltime"], label="Normal")
     if df_opt_single is not None:
         plt.scatter(
-            df_opt_single["mean_density"] * 1000,
+            df_opt_single["mean_density"],
             df_opt_single["mean_traveltime"],
             label="Single-tail optimization",
+            marker="x",
         )
     if df_opt_double is not None:
         plt.scatter(
-            df_opt_double["mean_density"] * 1000,
+            df_opt_double["mean_density"],
             df_opt_double["mean_traveltime"],
             label="Double-tail optimization",
+            marker="^",
         )
-    plt.xlabel("Mean density")
-    plt.ylabel("Mean travel time")
+    plt.xlabel(r"Mean density $(veh/km)$")
+    plt.ylabel(r"Mean travel time $(s)$")
+    plt.grid(linestyle="--")
     plt.legend()
+    plt.title(f"{args.day}\nMean travel time over mean density")
     plt.show()
 
-    plt.plot(df_data["time"], df_data["mean_density"] * 1000, label="Normal")
+    ########################################################################################
+    # Plot the mean density over time
+    ########################################################################################
+    plt.plot(df_data["time"], df_data["mean_density"], label="Normal")
     if df_opt_single is not None:
         plt.plot(
             df_opt_single["time"],
-            df_opt_single["mean_density"] * 1000,
+            df_opt_single["mean_density"],
             label="Single-tail optimization",
         )
     if df_opt_double is not None:
         plt.plot(
             df_opt_double["time"],
-            df_opt_double["mean_density"] * 1000,
+            df_opt_double["mean_density"],
             label="Double-tail optimization",
         )
-    plt.xlabel("Time")
-    plt.ylabel("Mean density")
+    plt.xticks(
+        np.arange(0, 288, 6),
+        [f"{int(t // 12):02d}:{int(t % 12) * 5:02d}" for t in np.arange(0, 288, 6)],
+        rotation=45,
+    )
+    plt.ylabel(r"Mean density $(veh/km)$")
+    plt.grid(linestyle="--")
     plt.legend()
+    plt.title(f"{args.day}\nMean density over time")
     plt.show()

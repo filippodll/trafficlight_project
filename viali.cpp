@@ -862,6 +862,9 @@ int main(int argc, char* argv[]) {
 
   std::cout << std::format("Simulation ended at time {} / {}", dynamics.time(), MAX_TIME)
             << std::endl;
+  std::cout << std::format("There are still {} agents in the system.",
+                           dynamics.agents().size())
+            << std::endl;
 
   outSpires.close();
   streetDensity.close();
