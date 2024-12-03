@@ -767,7 +767,8 @@ int main(int argc, char* argv[]) {
       } else {
         auto const oldValue = nAgents;
         auto const scaleFactor{static_cast<double>(GRANULARITY) / INTERVAL_AGENTS_IN};
-        nAgents /= scaleFactor * FLOW_PERCENTAGE / 100;
+        nAgents *= FLOW_PERCENTAGE / 100.;
+        nAgents /= scaleFactor;
         // std::cout << std::format("Time: {}, nAgents: {} -> {}",
         //                          dynamics.time(),
         //                          oldValue,
