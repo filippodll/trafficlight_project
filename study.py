@@ -16,7 +16,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     df_real = pd.read_csv(f"{args.input_folder}/{args.day}.csv", sep=";")
-    df_synth = pd.read_csv(f"./{args.day}/out_spires.csv", sep=";")
+    df_synth = pd.read_csv(f"./output/{args.day}/out_spires.csv", sep=";")
 
     OUTPUT_COILS = [21, 30, 76, 155, 166]
     INPUT_COILS = [1, 175, 190, 211, 233, 254, 276, 297, 341, 363, 384, 427]
@@ -43,7 +43,9 @@ if __name__ == "__main__":
     df_in = pd.DataFrame()
 
     df_validation = pd.DataFrame()
-    df_validation["time"] = df_synth["time"]
+    df_validation["time"] = np.convolve(
+        df_synth["time"].to_list(), np.ones((12,)) / 12, mode="full"
+    )
     df_validation["input"] = 0
     df_validation["output"] = 0
 
@@ -56,12 +58,10 @@ if __name__ == "__main__":
             df_in[idx] = data_real
             tot_input += sum(data_real)
             tot_input_synth += df_synth[str(idx)].sum()
-            df_validation["input"] += data_real
         elif int(idx) in OUTPUT_COILS:
             data_synth = df_synth[str(idx)].to_list()
             tot_output += sum(data_real)
             tot_output_synth += sum(data_synth)
-            df_validation["output"] += data_real
 
             # compute difference
             if len(data_real) == len(data_synth):
@@ -125,32 +125,57 @@ if __name__ == "__main__":
     plt.legend()
     plt.show()
 
-    # df_validation.set_index("time")
-    # df_validation["delta"] = df_validation["input"] - df_validation["output"]
-    # plt.plot(df_validation["delta"], label="Delta")
-    # plt.plot(df_validation["input"], label="Input")
-    # plt.plot(df_validation["output"], label="Output")
-    # plt.legend()
-    # plt.show()
-
     # plt.plot(mean_diff, label="Mean difference")
     # plt.show()
 
-    df_data = pd.read_csv(f"./{args.day}/data.csv", sep=";")
+    df_data = pd.read_csv(f"./output/{args.day}/data.csv", sep=";")
     # if exists ./{args.day}-optimized/data.csv import it
-    df_opt = None
+    df_opt_single = None
+    df_opt_double = None
     try:
-        df_opt = pd.read_csv(f"./{args.day}-optimized/data.csv", sep=";")
+        df_opt_single = pd.read_csv(f"./output/{args.day}-single/data.csv", sep=";")
     except FileNotFoundError:
-        pass
+        print(f"No optimized data found for {args.day}")
+    try:
+        df_opt_double = pd.read_csv(f"./output/{args.day}-double/data.csv", sep=";")
+    except FileNotFoundError:
+        print(f"No optimized data found for {args.day}")
 
-    # # plot mean_traveltime over mean_density for df_data
-    # plt.scatter(df_data["mean_density"], df_data["mean_traveltime"], label="Normal")
-    # if df_opt is not None:
-    #     plt.scatter(
-    #         df_opt["mean_density"], df_opt["mean_traveltime"], label="Optimized"
-    #     )
-    # plt.xlabel("Mean density")
-    # plt.ylabel("Mean travel time")
-    # plt.legend()
-    # plt.show()
+    # plot mean_traveltime over mean_density for df_data
+    plt.scatter(
+        df_data["mean_density"] * 1000, df_data["mean_traveltime"], label="Normal"
+    )
+    if df_opt_single is not None:
+        plt.scatter(
+            df_opt_single["mean_density"] * 1000,
+            df_opt_single["mean_traveltime"],
+            label="Single-tail optimization",
+        )
+    if df_opt_double is not None:
+        plt.scatter(
+            df_opt_double["mean_density"] * 1000,
+            df_opt_double["mean_traveltime"],
+            label="Double-tail optimization",
+        )
+    plt.xlabel("Mean density")
+    plt.ylabel("Mean travel time")
+    plt.legend()
+    plt.show()
+
+    plt.plot(df_data["time"], df_data["mean_density"] * 1000, label="Normal")
+    if df_opt_single is not None:
+        plt.plot(
+            df_opt_single["time"],
+            df_opt_single["mean_density"] * 1000,
+            label="Single-tail optimization",
+        )
+    if df_opt_double is not None:
+        plt.plot(
+            df_opt_double["time"],
+            df_opt_double["mean_density"] * 1000,
+            label="Double-tail optimization",
+        )
+    plt.xlabel("Time")
+    plt.ylabel("Mean density")
+    plt.legend()
+    plt.show()

@@ -48,29 +48,47 @@ typedef std::jthread thread_t;
 #endif
 
 int main(int argc, char* argv[]) {
-  if (argc != 7) {
+  if (argc != 10) {
     std::cerr << "Usage: " << argv[0]
-              << " <SEED> <DAY> <GRANULARITY> <DELAY> <DATA_FOLDER> <OPTIMIZE>\n";
+              << " <SEED> <DAY> <GRANULARITY> <DELAY> <DATA_FOLDER> <FLOW_PERCENTAGE> "
+                 "<OPTIMIZE> <OPT-THRESHOLD> <OPT-TOLERANCE>\n";
     return 1;
   }
 
-  int const SEED{std::stoi(argv[1])};           // seed for random number generator
-  std::string const DAY{argv[2]};               // day of the week
-  int const GRANULARITY{std::stoi(argv[3])};    // granularity of the data in seconds
-  int const DELAY{std::stoi(argv[4])};          // delay in granularity
-  std::string const DATA_FOLDER{argv[5]};       // folder containing the data files
-  bool const OPTIMIZE{std::stoi(argv[6]) > 0};  // optimize the graph
+  int const SEED{std::stoi(argv[1])};             // seed for random number generator
+  std::string const DAY{argv[2]};                 // day of the week
+  int const GRANULARITY{std::stoi(argv[3])};      // granularity of the data in seconds
+  int const DELAY{std::stoi(argv[4])};            // delay in granularity
+  std::string const DATA_FOLDER{argv[5]};         // folder containing the data files
+  int const FLOW_PERCENTAGE{std::stoi(argv[6])};  // percentage of the maximum flow
+  bool const OPTIMIZE{std::stoi(argv[7]) > 0};    // optimize the graph
+  auto const OPT_THRESHOLD{std::stod(argv[8])};
+  auto const OPT_TOLERANCE{std::stod(argv[9])};
 
   std::string const INPUT_FILE{std::format("{}/{}.csv", DATA_FOLDER, DAY)};
-  std::string OUT_FOLDER{std::format("./{}", DAY)};
+  std::string OUT_FOLDER{std::format("./output/{}", DAY)};
+  auto optType = dsm::TrafficLightOptimization::SINGLE_TAIL;
+  if (std::stoi(argv[7]) > 1) {
+    optType = dsm::TrafficLightOptimization::DOUBLE_TAIL;
+  }
   if (OPTIMIZE) {
-    OUT_FOLDER += "-optimized/";
+    switch (optType) {
+      case dsm::TrafficLightOptimization::SINGLE_TAIL:
+        OUT_FOLDER += "-single/";
+        break;
+      case dsm::TrafficLightOptimization::DOUBLE_TAIL:
+        OUT_FOLDER += "-double/";
+        break;
+    }
   } else {
     OUT_FOLDER += '/';
   }
 
   size_t const NDATAPOINTS{MAX_TIME / GRANULARITY};  // number of data points
 
+  if (!fs::exists("./output")) {
+    fs::create_directory("./output");
+  }
   if (fs::exists(OUT_FOLDER)) {
     fs::remove_all(OUT_FOLDER);
   }
@@ -79,6 +97,19 @@ int main(int argc, char* argv[]) {
     fs::remove_all("./constants");
   }
   fs::create_directory("./constants");
+
+  std::ofstream sargs(std::format("{}/args.txt", OUT_FOLDER));
+  sargs << "SEED: " << SEED << '\n';
+  sargs << "DAY: " << DAY << '\n';
+  sargs << "GRANULARITY: " << GRANULARITY << '\n';
+  sargs << "DELAY: " << DELAY << '\n';
+  sargs << "DATA_FOLDER: " << DATA_FOLDER << '\n';
+  sargs << "FLOW_PERCENTAGE: " << FLOW_PERCENTAGE << '\n';
+  sargs << "OPTIMIZE: " << OPTIMIZE << '\n';
+  sargs << "OPT_THRESHOLD: " << OPT_THRESHOLD << '\n';
+  sargs << "OPT_TOLERANCE: " << OPT_TOLERANCE << '\n';
+  sargs.close();
+
   std::cout << std::format("Using dsm version: {}", dsm::version()) << std::endl;
   std::cout << std::format("Output folder: {}", OUT_FOLDER) << std::endl;
 
@@ -217,6 +248,7 @@ int main(int argc, char* argv[]) {
   std::cout << "Creating traffic lights..." << std::endl;
   // saragozza
   TrafficLight saragozza{1, 127};
+  saragozza.setStreetPriorities({s0_1.id(), s2_1.id()});
   saragozza.setCycle(s0_1.id(), dsm::Direction::LEFTANDSTRAIGHT, {82, 0});
   saragozza.setCycle(s0_1.id(), dsm::Direction::RIGHT, {112, 97});
 
@@ -230,6 +262,7 @@ int main(int argc, char* argv[]) {
 
   // vallescura
   TrafficLight vallescura{2, 125};
+  vallescura.setStreetPriorities({s1_2.id(), s3_2.id()});
   vallescura.setCycle(s1_2.id(), dsm::Direction::ANY, {78, 25});
 
   vallescura.setCycle(s3_2.id(), dsm::Direction::RIGHTANDSTRAIGHT, {100, 25});
@@ -239,6 +272,7 @@ int main(int argc, char* argv[]) {
   vallescura.setCycle(s12_2.id(), dsm::Direction::ANY, {25, 0});
   // san mamolo
   TrafficLight sanmamolo{3, 155};
+  sanmamolo.setStreetPriorities({s2_3.id(), s4_3.id()});
   sanmamolo.setCycle(s2_3.id(), dsm::Direction::RIGHTANDSTRAIGHT, {85, 0});
 
   sanmamolo.setCycle(s4_3.id(), dsm::Direction::RIGHTANDSTRAIGHT, {120, 0});
@@ -251,6 +285,7 @@ int main(int argc, char* argv[]) {
 
   // savenella
   TrafficLight savenella{4, 83};
+  savenella.setStreetPriorities({s3_4.id(), s5_4.id()});
   savenella.setCycle(s3_4.id(), dsm::Direction::RIGHTANDSTRAIGHT, {83, 0});
   savenella.setCycle(s3_4.id(), dsm::Direction::LEFT, {30, 0});
 
@@ -258,6 +293,7 @@ int main(int argc, char* argv[]) {
 
   // rubbiani
   TrafficLight rubbiani{5, 95};
+  rubbiani.setStreetPriorities({s4_5.id(), s6_5.id()});
   rubbiani.setCycle(s4_5.id(), dsm::Direction::ANY, {55, 0});
   rubbiani.setCycle(s6_5.id(), dsm::Direction::ANY, {55, 0});
 
@@ -265,6 +301,7 @@ int main(int argc, char* argv[]) {
 
   // castiglione
   TrafficLight castiglione{6, 145};
+  castiglione.setStreetPriorities({s5_6.id(), s7_6.id()});
   castiglione.setCycle(s5_6.id(), dsm::Direction::ANY, {60, 0});
 
   castiglione.setCycle(s7_6.id(), dsm::Direction::RIGHTANDSTRAIGHT, {85, 0});
@@ -275,6 +312,7 @@ int main(int argc, char* argv[]) {
 
   // santo stefano
   TrafficLight santostefano{7, 115};
+  santostefano.setStreetPriorities({s6_7.id(), s8_7.id()});
   santostefano.setCycle(s6_7.id(), dsm::Direction::RIGHT, {90, 0});
   santostefano.setCycle(s6_7.id(), dsm::Direction::LEFTANDSTRAIGHT, {35, 0});
 
@@ -729,7 +767,7 @@ int main(int argc, char* argv[]) {
       } else {
         auto const oldValue = nAgents;
         auto const scaleFactor{static_cast<double>(GRANULARITY) / INTERVAL_AGENTS_IN};
-        nAgents /= scaleFactor;
+        nAgents /= scaleFactor * FLOW_PERCENTAGE / 100;
         // std::cout << std::format("Time: {}, nAgents: {} -> {}",
         //                          dynamics.time(),
         //                          oldValue,
@@ -770,14 +808,15 @@ int main(int argc, char* argv[]) {
     dynamics.evolve(false);
 
     if (OPTIMIZE && dynamics.time() % GRANULARITY == 0) {
-      dynamics.optimizeTrafficLights(10, 0.1, 3. / 10);
+      dynamics.optimizeTrafficLights(
+          OPT_THRESHOLD, OPT_TOLERANCE, optType);  // 0.3, 0.8, NEAREST_NEIGHBOUR
     }
 
     // OUTPUTS   -   -   -
 
     if (dynamics.time() % GRANULARITY == 0) {
       const auto& meanSpeed{dynamics.streetMeanSpeed()};
-      const auto& meanDensity{dynamics.streetMeanDensity(true)};
+      const auto& meanDensity{dynamics.streetMeanDensity(false)};
       const auto& meanFlow{dynamics.streetMeanFlow()};
       const auto& meanTravelTime{dynamics.meanTravelTime()};
 

@@ -3,6 +3,8 @@ __pycache__
 .vscode
 build
 temp_img
+signal
+output
 
 # File types
 *.csv
