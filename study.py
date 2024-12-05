@@ -51,6 +51,9 @@ if __name__ == "__main__":
     df_validation["input"] = 0
     df_validation["output"] = 0
 
+    fig_diff, ax_diff = plt.subplots(figsize=(16, 9))
+    fig, ax = plt.subplots(figsize=(16, 9))
+
     for _, row in df_real.iterrows():
         idx = COIL_DICT.get(row["section"].strip())
         data_real = [int(d) for d in row["data"].split()]
@@ -89,9 +92,18 @@ if __name__ == "__main__":
                 x = np.arange(8 * 12, 20 * 12)
                 # convert into time
                 x = [f"{int(t // 12):02d}:{int(t % 12) * 5:02d}" for t in x]
-                plt.plot(
-                    x, diff, label=f"Coil {idx // args.n_nodes} -> {idx % args.n_nodes}"
-                )
+                if int(idx) == 155:
+                    ax.plot(
+                        x,
+                        diff,
+                        label=f"Coil {idx // args.n_nodes} -> {idx % args.n_nodes}",
+                    )
+                else:
+                    ax_diff.plot(
+                        x,
+                        diff,
+                        label=f"Coil {idx // args.n_nodes} -> {idx % args.n_nodes}",
+                    )
 
         elif int(idx) in INNER_COILS:
             data_synth = df_synth[str(idx)].to_list()
@@ -115,20 +127,39 @@ if __name__ == "__main__":
     print(f"Total inner: {tot_inner}")
     print(f"Total inner synth: {tot_inner_synth}")
 
-    plt.title(
+    ax_diff.set_title(
         f"{args.day}\nDifference between output REAL and SIMULATED data - media oraria"
     )
-    # show only one in 12 ticks
-    plt.xticks(np.arange(0, len(df_diff), 6), rotation=45)
-    # make a grid with dashed lines
-    plt.grid(linestyle="--")
-    plt.xlabel("Simulation time")
-    plt.ylabel("Relative error (%)")
-    plt.legend()
-    plt.show()
+    ax_diff.set_xticks(np.arange(0, len(df_diff), 6))
+    ax_diff.set_xticklabels(
+        [
+            f"{int(t // 12)+8:02d}:{int(t % 12) * 5:02d}"
+            for t in np.arange(0, len(df_diff), 6)
+        ],
+        rotation=45,
+    )
+    ax_diff.grid(linestyle="--")
+    ax_diff.set_xlabel("Simulation time")
+    ax_diff.set_ylabel("Relative error (%)")
+    ax_diff.legend()
+    fig_diff.savefig(f"./output/{args.day}/diff.png")
 
-    # plt.plot(mean_diff, label="Mean difference")
-    # plt.show()
+    ax.set_title(
+        f"{args.day}\nDifference between output REAL and SIMULATED data - media oraria"
+    )
+    ax.set_xticks(np.arange(0, len(df_diff), 6))
+    ax.set_xticklabels(
+        [
+            f"{int(t // 12)+8:02d}:{int(t % 12) * 5:02d}"
+            for t in np.arange(0, len(df_diff), 6)
+        ],
+        rotation=45,
+    )
+    ax.grid(linestyle="--")
+    ax.set_xlabel("Simulation time")
+    ax.set_ylabel("Relative error (%)")
+    ax.legend()
+    fig.savefig(f"./output/{args.day}/wrong.png")
 
     df_data = pd.read_csv(f"./output/{args.day}/data.csv", sep=";")
     df_data["time"] = df_data["time"] // 300  # Each point is 5 minutes
@@ -153,6 +184,7 @@ if __name__ == "__main__":
     # Plot the mean travel time over the mean density
     ########################################################################################
     plt.scatter(df_data["mean_density"], df_data["mean_traveltime"], label="Normal")
+    plt.figure(figsize=(16, 9))
     if df_opt_single is not None:
         plt.scatter(
             df_opt_single["mean_density"],
@@ -172,12 +204,13 @@ if __name__ == "__main__":
     plt.grid(linestyle="--")
     plt.legend()
     plt.title(f"{args.day}\nMean travel time over mean density")
-    plt.show()
+    plt.savefig(f"./output/{args.day}/traveltime_density.png")
 
     ########################################################################################
     # Plot the mean density over time
     ########################################################################################
     plt.plot(df_data["time"], df_data["mean_density"], label="Normal")
+    plt.figure(figsize=(16, 9))
     if df_opt_single is not None:
         plt.plot(
             df_opt_single["time"],
@@ -199,4 +232,4 @@ if __name__ == "__main__":
     plt.grid(linestyle="--")
     plt.legend()
     plt.title(f"{args.day}\nMean density over time")
-    plt.show()
+    plt.savefig(f"./output/{args.day}/density_time.png")
