@@ -128,7 +128,7 @@ if __name__ == "__main__":
     print(f"Total inner synth: {tot_inner_synth}")
 
     ax_diff.set_title(
-        f"{args.day}\nDifference between output REAL and SIMULATED data - media oraria"
+        f"{args.day}\nDifference between output REAL and SIMULATED data - hourly average"
     )
     ax_diff.set_xticks(np.arange(0, len(df_diff), 6))
     ax_diff.set_xticklabels(
@@ -145,7 +145,7 @@ if __name__ == "__main__":
     fig_diff.savefig(f"./output/{args.day}/diff.png")
 
     ax.set_title(
-        f"{args.day}\nDifference between output REAL and SIMULATED data - media oraria"
+        f"{args.day}\nDifference between output REAL and SIMULATED data - hourly average"
     )
     ax.set_xticks(np.arange(0, len(df_diff), 6))
     ax.set_xticklabels(
