@@ -44,26 +44,34 @@ for u, v in G.edges():
     else:
         G.edges[u, v]["color"] = COLORMAP["other"]
 
-colors = [G[u][v]["color"] for u, v in G.edges()]
+edge_colors = [G[u][v]["color"] for u, v in G.edges()]
+
+for node in G.nodes():
+    if node in range(1, 8):
+        G.nodes[node]["color"] = "orange"
+    else:
+        G.nodes[node]["color"] = "grey"
+
+node_colors = [G.nodes[node]["color"] for node in G.nodes()]
 
 # figsize double as the default
-_, ax = plt.subplots()
+_, ax = plt.subplots(figsize=(16, 9))
 limits = GDF.total_bounds + np.array([-0.001, -0.001, 0.001, 0.001])
 ax.set_xlim(limits[0], limits[2])
 ax.set_ylim(limits[1], limits[3])
 
 nx.draw_networkx_edges(
-        G,
-        pos,
-        edgelist=edges,
-        edge_color=colors,
-        ax=ax,
-        connectionstyle="arc3,rad=0.05",
-        arrowsize=10,
-        arrowstyle="->",
-        width=2.5,
-    )
-nx.draw_networkx_nodes(G, pos, ax=ax, node_size=169)
+    G,
+    pos,
+    edgelist=edges,
+    edge_color=edge_colors,
+    ax=ax,
+    connectionstyle="arc3,rad=0.05",
+    arrowsize=10,
+    arrowstyle="->",
+    width=2.5,
+)
+nx.draw_networkx_nodes(G, pos, ax=ax, node_size=169, node_color=node_colors)
 nx.draw_networkx_labels(G, pos, ax=ax, font_size=12)
 ctx.add_basemap(
     ax, crs=GDF.crs.to_string(), source=ctx.providers.OpenStreetMap.Mapnik, alpha=0.5
@@ -76,9 +84,23 @@ plt.legend(
         plt.Line2D([0], [0], color=COLORMAP["input"], lw=4),
         plt.Line2D([0], [0], color=COLORMAP["inner"], lw=4),
         plt.Line2D([0], [0], color=COLORMAP["other"], lw=4),
+        plt.Line2D(
+            [0], [0], marker="o", color="w", markerfacecolor="orange", markersize=10
+        ),
+        plt.Line2D(
+            [0], [0], marker="o", color="w", markerfacecolor="grey", markersize=10
+        ),
     ],
-    ["Output coils", "Input coils", "Inner coils", "Other coils"],
+    [
+        "Output coils",
+        "Input coils",
+        "Inner coils",
+        "Other coils",
+        "Traffic Lights",
+        "Other nodes",
+    ],
     loc="upper right",
 )
-plt.title("Coil network from porta Saragozza to porta Santo Stefano")
-plt.show()
+# remove white space around the plot
+plt.tight_layout()
+plt.savefig("network.png", dpi=300)
