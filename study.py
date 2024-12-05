@@ -183,8 +183,8 @@ if __name__ == "__main__":
     ########################################################################################
     # Plot the mean travel time over the mean density
     ########################################################################################
-    plt.scatter(df_data["mean_density"], df_data["mean_traveltime"], label="Normal")
     plt.figure(figsize=(16, 9))
+    plt.scatter(df_data["mean_density"], df_data["mean_traveltime"], label="Normal")
     if df_opt_single is not None:
         plt.scatter(
             df_opt_single["mean_density"],
@@ -209,8 +209,8 @@ if __name__ == "__main__":
     ########################################################################################
     # Plot the mean density over time
     ########################################################################################
-    plt.plot(df_data["time"], df_data["mean_density"], label="Normal")
     plt.figure(figsize=(16, 9))
+    plt.plot(df_data["time"], df_data["mean_density"], label="Normal")
     if df_opt_single is not None:
         plt.plot(
             df_opt_single["time"],
