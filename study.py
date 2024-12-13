@@ -86,7 +86,8 @@ if __name__ == "__main__":
                 # substitue zeros with one in data_real
                 diff = diff / np.array([1 if d == 0 else d for d in data_real])
                 diff = diff[8 * 12 : 20 * 12] * 100
-                df_diff[str(idx)] = diff
+                # if int(idx) != 155:
+                #     df_diff[str(idx)] = diff
                 # diff = diff * 65 / 85
                 # x labels: one point every 5 minutes from 8:00 to 20:00
                 x = np.arange(8 * 12, 20 * 12)

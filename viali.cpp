@@ -24,9 +24,7 @@ const std::string IN_COORDS{"./coordinates.dsm"};  // input coords file
 
 // Compatible with dsm 1.3.8
 
-using Delay = uint8_t;
-
-using Dynamics = dsm::FirstOrderDynamics<Delay>;
+using Dynamics = dsm::FirstOrderDynamics;
 using Street = dsm::Street;
 using TrafficLight = dsm::TrafficLight;
 
@@ -439,9 +437,7 @@ int main(int argc, char* argv[]) {
   dict << '}' << std::endl;
   dict.close();
   // Create the dynamics
-  Dynamics dynamics{graph};
-  dynamics.setSeed(SEED);
-  dynamics.setMinSpeedRateo(0.95);
+  Dynamics dynamics{graph, SEED, 0.95};
   if (OPTIMIZE) {
     dynamics.setDataUpdatePeriod(INTERVAL_AGENTS_IN);
   }
@@ -582,7 +578,7 @@ int main(int argc, char* argv[]) {
         dstProbabilities[id] = (data[idx_out]);
       }
       // Balance every node input
-      std::unordered_map<dsm::Id, dsm::Size> synthetic_inner_data;
+      // std::unordered_map<dsm::Id, dsm::Size> synthetic_inner_data;
       for (auto const& [nodeId, node] : dynamics.graph().nodeSet()) {
         auto const& inputRoads{adjMatrix.getCol(nodeId, true)};
         auto const& outputRoads{adjMatrix.getRow(nodeId, true)};
@@ -597,8 +593,8 @@ int main(int argc, char* argv[]) {
             inputCounts += srcProbabilities[id];
           } else if (inner_data.contains(inputStreetId)) {
             inputCounts += inner_data[inputStreetId][idx_in];
-          } else if (synthetic_inner_data.contains(inputStreetId)) {
-            inputCounts += synthetic_inner_data[inputStreetId];
+          // } else if (synthetic_inner_data.contains(inputStreetId)) {
+          //   inputCounts += synthetic_inner_data[inputStreetId];
           } else {
             missingInput.emplace(inputStreetId);
           }
@@ -610,8 +606,8 @@ int main(int argc, char* argv[]) {
             outputCounts += dstProbabilities[id];
           } else if (inner_data.contains(outputStreetId)) {
             outputCounts += inner_data[outputStreetId][idx_out];
-          } else if (synthetic_inner_data.contains(outputStreetId)) {
-            outputCounts += synthetic_inner_data[outputStreetId];
+          // } else if (synthetic_inner_data.contains(outputStreetId)) {
+          //   outputCounts += synthetic_inner_data[outputStreetId];
           } else {
             missingOutput.emplace(outputStreetId);
           }
@@ -755,8 +751,8 @@ int main(int argc, char* argv[]) {
           weight = 1. / size;
         }
         std::cout << std::format(
-                         "No output data for time {}, using uniform distribution.",
-                         dynamics.time())
+                         "No output data for time {}, using uniform distribution with probability {}.",
+                         dynamics.time(), 1. / size)
                   << std::endl;
       }
       ++current_index;
