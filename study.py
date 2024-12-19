@@ -150,11 +150,11 @@ if __name__ == "__main__":
     ax.set_title(
         f"{args.day}\nDifference between output REAL and SIMULATED data - hourly average"
     )
-    ax.set_xticks(np.arange(0, len(df_diff), 6))
+    ax.set_xticks(np.arange(0, len(df_diff), 12))
     ax.set_xticklabels(
         [
             f"{int(t // 12)+8:02d}:{int(t % 12) * 5:02d}"
-            for t in np.arange(0, len(df_diff), 6)
+            for t in np.arange(0, len(df_diff), 12)
         ],
         rotation=45,
     )
@@ -229,8 +229,8 @@ if __name__ == "__main__":
             label="Double-tail optimization",
         )
     plt.xticks(
-        np.arange(0, 288, 6),
-        [f"{int(t // 12):02d}:{int(t % 12) * 5:02d}" for t in np.arange(0, 288, 6)],
+        np.arange(0, 288, 12),
+        [f"{int(t // 12):02d}:{int(t % 12) * 5:02d}" for t in np.arange(0, 288, 12)],
         rotation=45,
     )
     plt.ylabel(r"Mean density $(veh/km)$", fontsize="xx-large")
