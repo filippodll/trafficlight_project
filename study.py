@@ -129,7 +129,8 @@ if __name__ == "__main__":
     print(f"Total inner synth: {tot_inner_synth}")
 
     ax_diff.set_title(
-        f"{args.day}\nDifference between output REAL and SIMULATED data - hourly average"
+        f"{args.day}\nDifference between output REAL and SIMULATED data - hourly average",
+        fontsize="xx-large",
     )
     ax_diff.set_xticks(np.arange(0, len(df_diff), 6))
     ax_diff.set_xticklabels(
@@ -140,9 +141,10 @@ if __name__ == "__main__":
         rotation=45,
     )
     ax_diff.grid(linestyle="--")
-    ax_diff.set_xlabel("Simulation time")
-    ax_diff.set_ylabel("Relative error (%)")
-    ax_diff.legend()
+    ax_diff.set_xlabel("Simulation time", fontsize="xx-large")
+    ax_diff.set_ylabel("Relative error (%)", fontsize="xx-large")
+    ax_diff.legend(fontsize="xx-large")
+    ax_diff.tick_params(axis="both", which="major", labelsize=14)
     fig_diff.savefig(f"./output/{args.day}/diff.png")
 
     ax.set_title(
@@ -157,9 +159,10 @@ if __name__ == "__main__":
         rotation=45,
     )
     ax.grid(linestyle="--")
-    ax.set_xlabel("Simulation time")
-    ax.set_ylabel("Relative error (%)")
-    ax.legend()
+    ax.set_xlabel("Simulation time", fontsize="xx-large")
+    ax.set_ylabel("Relative error (%)", fontsize="xx-large")
+    ax.legend(fontsize="xx-large")
+    ax.tick_params(axis="both", which="major", labelsize=14)
     fig.savefig(f"./output/{args.day}/wrong.png")
 
     df_data = pd.read_csv(f"./output/{args.day}/data.csv", sep=";")
@@ -200,11 +203,12 @@ if __name__ == "__main__":
             label="Double-tail optimization",
             marker="^",
         )
-    plt.xlabel(r"Mean density $(veh/km)$")
-    plt.ylabel(r"Mean travel time $(s)$")
+    plt.xlabel(r"Mean density $(veh/km)$", fontsize="xx-large")
+    plt.ylabel(r"Mean travel time $(s)$", fontsize="xx-large")
     plt.grid(linestyle="--")
-    plt.legend()
-    plt.title(f"{args.day}\nMean travel time over mean density")
+    plt.legend(fontsize="xx-large")
+    plt.tick_params(axis="both", which="major", labelsize=14)
+    plt.title(f"{args.day}\nMean travel time over mean density", fontsize="xx-large")
     plt.savefig(f"./output/{args.day}/traveltime_density.png")
 
     ########################################################################################
@@ -229,8 +233,9 @@ if __name__ == "__main__":
         [f"{int(t // 12):02d}:{int(t % 12) * 5:02d}" for t in np.arange(0, 288, 6)],
         rotation=45,
     )
-    plt.ylabel(r"Mean density $(veh/km)$")
+    plt.ylabel(r"Mean density $(veh/km)$", fontsize="xx-large")
     plt.grid(linestyle="--")
-    plt.legend()
-    plt.title(f"{args.day}\nMean density over time")
+    plt.legend(fontsize="xx-large")
+    plt.tick_params(axis="both", which="major", labelsize=14)
+    plt.title(f"{args.day}\nMean density over time", fontsize="xx-large")
     plt.savefig(f"./output/{args.day}/density_time.png")
