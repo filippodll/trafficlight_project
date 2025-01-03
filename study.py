@@ -188,16 +188,18 @@ if __name__ == "__main__":
     # Plot the mean travel time over the mean density
     ########################################################################################
     plt.figure(figsize=(16, 9))
-    plt.scatter(df_data["mean_density"], df_data["mean_traveltime"], label="Normal")
+    plt.plot(
+        df_data["mean_density"], df_data["mean_traveltime"], label="Normal", marker="o"
+    )
     if df_opt_single is not None:
-        plt.scatter(
+        plt.plot(
             df_opt_single["mean_density"],
             df_opt_single["mean_traveltime"],
             label="Single-tail optimization",
             marker="x",
         )
     if df_opt_double is not None:
-        plt.scatter(
+        plt.plot(
             df_opt_double["mean_density"],
             df_opt_double["mean_traveltime"],
             label="Double-tail optimization",
