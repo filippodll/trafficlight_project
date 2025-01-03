@@ -214,6 +214,34 @@ if __name__ == "__main__":
     plt.savefig(f"./output/{args.day}/traveltime_density.png")
 
     ########################################################################################
+    # Plot the mean travel time over time
+    ########################################################################################
+    plt.figure(figsize=(16, 9))
+    plt.plot(df_data["mean_traveltime"], label="Normal")
+    if df_opt_single is not None:
+        plt.plot(
+            df_opt_single["mean_traveltime"],
+            label="Single-tail optimization",
+        )
+    if df_opt_double is not None:
+        plt.plot(
+            df_opt_double["mean_traveltime"],
+            label="Double-tail optimization",
+        )
+    plt.xticks(
+        np.arange(0, 288, 12),
+        [f"{int(t // 12):02d}:{int(t % 12) * 5:02d}" for t in np.arange(0, 288, 12)],
+        rotation=45,
+        fontsize="xx-large",
+    )
+    plt.ylabel(r"Mean travel time $(s)$", fontsize="xx-large")
+    plt.grid(linestyle="--")
+    plt.legend(fontsize="xx-large")
+    plt.tick_params(axis="both", which="major", labelsize=14)
+    plt.title(f"{args.day}\nMean travel time over time", fontsize="xx-large")
+    plt.savefig(f"./output/{args.day}/traveltime.png")
+
+    ########################################################################################
     # Plot the mean density over time
     ########################################################################################
     plt.figure(figsize=(16, 9))
