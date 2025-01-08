@@ -6,6 +6,79 @@ from structures_out import COIL_DICT
 
 # plt.rcParams['text.usetex'] = True
 
+
+def alignYaxes(axes, align_values=None):
+    """Align the ticks of multiple y axes
+
+    Args:
+        axes (list): list of axes objects whose yaxis ticks are to be aligned.
+    Keyword Args:
+        align_values (None or list/tuple): if not None, should be a list/tuple
+            of floats with same length as <axes>. Values in <align_values>
+            define where the corresponding axes should be aligned up. E.g.
+            [0, 100, -22.5] means the 0 in axes[0], 100 in axes[1] and -22.5
+            in axes[2] would be aligned up. If None, align (approximately)
+            the lowest ticks in all axes.
+    Returns:
+        new_ticks (list): a list of new ticks for each axis in <axes>.
+
+        A new sets of ticks are computed for each axis in <axes> but with equal
+        length.
+    """
+    from matplotlib.pyplot import MaxNLocator
+
+    nax = len(axes)
+    ticks = [aii.get_yticks() for aii in axes]
+    if align_values is None:
+        aligns = [ticks[ii][0] for ii in range(nax)]
+    else:
+        if len(align_values) != nax:
+            raise Exception("Length of <axes> doesn't equal that of <align_values>.")
+        aligns = align_values
+
+    bounds = [aii.get_ylim() for aii in axes]
+
+    # align at some points
+    ticks_align = [ticks[ii] - aligns[ii] for ii in range(nax)]
+
+    # scale the range to 1-100
+    ranges = [tii[-1] - tii[0] for tii in ticks]
+    lgs = [-np.log10(rii) + 2.0 for rii in ranges]
+    igs = [np.floor(ii) for ii in lgs]
+    log_ticks = [ticks_align[ii] * (10.0 ** igs[ii]) for ii in range(nax)]
+
+    # put all axes ticks into a single array, then compute new ticks for all
+    comb_ticks = np.concatenate(log_ticks)
+    comb_ticks.sort()
+    locator = MaxNLocator(nbins="auto", steps=[1, 2, 2.5, 3, 4, 5, 8, 10])
+    new_ticks = locator.tick_values(comb_ticks[0], comb_ticks[-1])
+    new_ticks = [new_ticks / 10.0 ** igs[ii] for ii in range(nax)]
+    new_ticks = [new_ticks[ii] + aligns[ii] for ii in range(nax)]
+
+    # find the lower bound
+    idx_l = 0
+    for i in range(len(new_ticks[0])):
+        if any([new_ticks[jj][i] > bounds[jj][0] for jj in range(nax)]):
+            idx_l = i - 1
+            break
+
+    # find the upper bound
+    idx_r = 0
+    for i in range(len(new_ticks[0])):
+        if all([new_ticks[jj][i] > bounds[jj][1] for jj in range(nax)]):
+            idx_r = i
+            break
+
+    # trim tick lists by bounds
+    new_ticks = [tii[idx_l : idx_r + 1] for tii in new_ticks]
+
+    # set ticks for each axis
+    for axii, tii in zip(axes, new_ticks):
+        axii.set_yticks(tii)
+
+    return new_ticks
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -42,6 +115,7 @@ if __name__ == "__main__":
     # df_diff["time"] = df_synth["time"]
     # restrict df_diff in 8*12:20*12
     df_diff = df_diff[8 * 12 : 20 * 12]
+
     df_in = pd.DataFrame()
 
     df_validation = pd.DataFrame()
@@ -53,6 +127,11 @@ if __name__ == "__main__":
 
     fig_diff, ax_diff = plt.subplots(figsize=(16, 9))
     fig, ax = plt.subplots(figsize=(16, 9))
+
+    # x labels: one point every 5 minutes from 8:00 to 20:00
+    ref_time = np.arange(8 * 12, 20 * 12)
+    # convert into time
+    ref_time = [f"{int(t // 12):02d}:{int(t % 12) * 5:02d}" for t in ref_time]
 
     for _, row in df_real.iterrows():
         idx = COIL_DICT.get(row["section"].strip())
@@ -86,21 +165,18 @@ if __name__ == "__main__":
                 # substitue zeros with one in data_real
                 diff = diff / np.array([1 if d == 0 else d for d in data_real])
                 diff = diff[8 * 12 : 20 * 12] * 100
-                df_diff[str(idx)] = diff
+                # if int(idx) != 155:
+                #     df_diff[str(idx)] = diff
                 # diff = diff * 65 / 85
-                # x labels: one point every 5 minutes from 8:00 to 20:00
-                x = np.arange(8 * 12, 20 * 12)
-                # convert into time
-                x = [f"{int(t // 12):02d}:{int(t % 12) * 5:02d}" for t in x]
                 if int(idx) == 155:
                     ax.plot(
-                        x,
+                        ref_time,
                         diff,
                         label=f"Coil {idx // args.n_nodes} -> {idx % args.n_nodes}",
                     )
                 else:
                     ax_diff.plot(
-                        x,
+                        ref_time,
                         diff,
                         label=f"Coil {idx // args.n_nodes} -> {idx % args.n_nodes}",
                     )
@@ -128,7 +204,8 @@ if __name__ == "__main__":
     print(f"Total inner synth: {tot_inner_synth}")
 
     ax_diff.set_title(
-        f"{args.day}\nDifference between output REAL and SIMULATED data - hourly average"
+        f"{args.day}\nDifference between output REAL and SIMULATED data - hourly average",
+        fontsize="xx-large",
     )
     ax_diff.set_xticks(np.arange(0, len(df_diff), 6))
     ax_diff.set_xticklabels(
@@ -139,31 +216,38 @@ if __name__ == "__main__":
         rotation=45,
     )
     ax_diff.grid(linestyle="--")
-    ax_diff.set_xlabel("Simulation time")
-    ax_diff.set_ylabel("Relative error (%)")
-    ax_diff.legend()
+    ax_diff.set_xlabel("Simulation time", fontsize="xx-large")
+    ax_diff.set_ylabel("Relative error (%)", fontsize="xx-large")
+    ax_diff.legend(fontsize="xx-large")
+    ax_diff.tick_params(axis="both", which="major", labelsize=14)
     fig_diff.savefig(f"./output/{args.day}/diff.png")
 
     ax.set_title(
         f"{args.day}\nDifference between output REAL and SIMULATED data - hourly average"
     )
-    ax.set_xticks(np.arange(0, len(df_diff), 6))
+    ax.set_xticks(np.arange(0, len(df_diff), 12))
     ax.set_xticklabels(
         [
             f"{int(t // 12)+8:02d}:{int(t % 12) * 5:02d}"
-            for t in np.arange(0, len(df_diff), 6)
+            for t in np.arange(0, len(df_diff), 12)
         ],
         rotation=45,
     )
     ax.grid(linestyle="--")
-    ax.set_xlabel("Simulation time")
-    ax.set_ylabel("Relative error (%)")
-    ax.legend()
+    ax.set_xlabel("Simulation time", fontsize="xx-large")
+    ax.set_ylabel("Relative error (%)", fontsize="xx-large")
+    ax.legend(fontsize="xx-large")
+    ax.tick_params(axis="both", which="major", labelsize=14)
     fig.savefig(f"./output/{args.day}/wrong.png")
 
     df_data = pd.read_csv(f"./output/{args.day}/data.csv", sep=";")
     df_data["time"] = df_data["time"] // 300  # Each point is 5 minutes
     df_data["mean_density"] = df_data["mean_density"] * 1000  # convert to veh/km
+
+    df_in["time"] = df_data["time"]
+    df_in = df_in.set_index("time")
+    df_in["total"] = df_in.sum(axis=1)
+
     # if exists ./{args.day}-optimized/data.csv import it
     df_opt_single = None
     df_opt_double = None
@@ -184,54 +268,107 @@ if __name__ == "__main__":
     # Plot the mean travel time over the mean density
     ########################################################################################
     plt.figure(figsize=(16, 9))
-    plt.scatter(df_data["mean_density"], df_data["mean_traveltime"], label="Normal")
+    plt.plot(
+        df_data["mean_density"], df_data["mean_traveltime"], label="Normal", marker="o"
+    )
     if df_opt_single is not None:
-        plt.scatter(
+        plt.plot(
             df_opt_single["mean_density"],
             df_opt_single["mean_traveltime"],
             label="Single-tail optimization",
             marker="x",
         )
     if df_opt_double is not None:
-        plt.scatter(
+        plt.plot(
             df_opt_double["mean_density"],
             df_opt_double["mean_traveltime"],
             label="Double-tail optimization",
             marker="^",
         )
-    plt.xlabel(r"Mean density $(veh/km)$")
-    plt.ylabel(r"Mean travel time $(s)$")
+    plt.xlabel(r"Mean density $(veh/km)$", fontsize="xx-large")
+    plt.ylabel(r"Mean travel time $(s)$", fontsize="xx-large")
     plt.grid(linestyle="--")
-    plt.legend()
-    plt.title(f"{args.day}\nMean travel time over mean density")
+    plt.legend(fontsize="xx-large")
+    plt.tick_params(axis="both", which="major", labelsize=14)
+    plt.title(f"{args.day}\nMean travel time over mean density", fontsize="xx-large")
     plt.savefig(f"./output/{args.day}/traveltime_density.png")
+
+    ########################################################################################
+    # Plot the mean travel time over time
+    ########################################################################################
+    fig, ax = plt.subplots(figsize=(16, 9))
+    ax.plot(df_data["mean_traveltime"], label="Normal")
+    if df_opt_single is not None:
+        ax.plot(
+            df_opt_single["mean_traveltime"],
+            label="Single-tail optimization",
+        )
+    if df_opt_double is not None:
+        ax.plot(
+            df_opt_double["mean_traveltime"],
+            label="Double-tail optimization",
+        )
+    ax.set_xticks(
+        np.arange(0, 288, 12),
+        [f"{int(t // 12):02d}:{int(t % 12) * 5:02d}" for t in np.arange(0, 288, 12)],
+        rotation=45,
+        fontsize="xx-large",
+    )
+    ax2 = ax.twinx()
+    ax2.plot(
+        df_in["total"],
+        label="Total input",
+        color="black",
+        linestyle="--",
+    )
+    ax.set_ylabel(r"Mean travel time $(s)$", fontsize="xx-large")
+    ax.grid(linestyle="--")
+    ax.legend(fontsize="xx-large", loc="upper left")
+    alignYaxes([ax, ax2], [ax.get_yticks()[0], ax2.get_yticks()[0]])
+    ax2.set_ylabel(r"Total input $(veh)$", fontsize="xx-large")
+    ax2.legend(fontsize="xx-large", loc="upper right")
+    ax.tick_params(axis="both", which="major", labelsize=14)
+    plt.title(f"{args.day}\nMean travel time over time", fontsize="xx-large")
+
+    plt.savefig(f"./output/{args.day}/traveltime.png")
 
     ########################################################################################
     # Plot the mean density over time
     ########################################################################################
-    plt.figure(figsize=(16, 9))
-    plt.plot(df_data["time"], df_data["mean_density"], label="Normal")
+    fig, ax = plt.subplots(figsize=(16, 9))
+    ax.plot(df_data["time"], df_data["mean_density"], label="Normal")
     if df_opt_single is not None:
-        plt.plot(
+        ax.plot(
             df_opt_single["time"],
             df_opt_single["mean_density"],
             label="Single-tail optimization",
         )
     if df_opt_double is not None:
-        plt.plot(
+        ax.plot(
             df_opt_double["time"],
             df_opt_double["mean_density"],
             label="Double-tail optimization",
         )
-    plt.xticks(
-        np.arange(0, 288, 6),
-        [f"{int(t // 12):02d}:{int(t % 12) * 5:02d}" for t in np.arange(0, 288, 6)],
+    ax.set_xticks(
+        np.arange(0, 288, 12),
+        [f"{int(t // 12):02d}:{int(t % 12) * 5:02d}" for t in np.arange(0, 288, 12)],
         rotation=45,
     )
-    plt.ylabel(r"Mean density $(veh/km)$")
-    plt.grid(linestyle="--")
-    plt.legend()
-    plt.title(f"{args.day}\nMean density over time")
+    ax2 = ax.twinx()
+    ax2.plot(
+        df_in["total"],
+        label="Total input",
+        color="black",
+        linestyle="--",
+    )
+    ax.set_ylabel(r"Mean density $(veh/km)$", fontsize="xx-large")
+    ax.grid(linestyle="--")
+    ax.legend(fontsize="xx-large", loc="upper left")
+    alignYaxes([ax, ax2], [ax.get_yticks()[0], ax2.get_yticks()[0]])
+    ax2.set_ylabel(r"Total input $(veh)$", fontsize="xx-large")
+    ax2.legend(fontsize="xx-large", loc="upper right")
+    plt.tick_params(axis="both", which="major", labelsize=14)
+    plt.title(f"{args.day}\nMean density over time", fontsize="xx-large")
     plt.savefig(f"./output/{args.day}/density_time.png")
 
     ########################################################################################

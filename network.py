@@ -71,8 +71,8 @@ nx.draw_networkx_edges(
     arrowstyle="->",
     width=2.5,
 )
-nx.draw_networkx_nodes(G, pos, ax=ax, node_size=169, node_color=node_colors)
-nx.draw_networkx_labels(G, pos, ax=ax, font_size=12)
+nx.draw_networkx_nodes(G, pos, ax=ax, node_size=500, node_color=node_colors)
+nx.draw_networkx_labels(G, pos, ax=ax, font_size=20)
 ctx.add_basemap(
     ax, crs=GDF.crs.to_string(), source=ctx.providers.OpenStreetMap.Mapnik, alpha=0.5
 )
@@ -100,6 +100,10 @@ plt.legend(
         "Other nodes",
     ],
     loc="upper right",
+    title="Coil types",
+    # increase dimension by a lot
+    title_fontsize="xx-large",
+    fontsize="xx-large",
 )
 # remove white space around the plot
 plt.tight_layout()
