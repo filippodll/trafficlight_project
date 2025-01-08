@@ -68,7 +68,7 @@ int main(int argc, char* argv[]) {
   std::string const INPUT_FILE{std::format("{}/{}.csv", DATA_FOLDER, DAY)};
   std::string OUT_FOLDER{std::format("./output/{}", DAY)};
   auto optType = dsm::TrafficLightOptimization::SINGLE_TAIL;
-  if (std::stoi(argv[7]) > 1) {
+  if (std::stoi(argv[8]) > 1) {
     optType = dsm::TrafficLightOptimization::DOUBLE_TAIL;
   }
   if (OPTIMIZE) {
