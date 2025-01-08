@@ -88,6 +88,7 @@ if __name__ == "__main__":
         "--n-nodes", type=int, required=True, help="Number of nodes in the network"
     )
     parser.add_argument("--input-folder", type=str, required=True, help="Input folder")
+    parser.add_argument("--print-coildiff", action="store_true", help="Print coil diff")
     args = parser.parse_args()
 
     df_real = pd.read_csv(f"{args.input_folder}/{args.day}.csv", sep=";")
@@ -374,49 +375,59 @@ if __name__ == "__main__":
     ########################################################################################
     # Plot the difference between optimized and non optimized input flows
     ########################################################################################
+    if args.print_coildiff:
+        df_synth_single = pd.read_csv(
+            f"./output/{args.day}-single/out_spires.csv", sep=";"
+        )
+        df_synth_double = pd.read_csv(
+            f"./output/{args.day}-double/out_spires.csv", sep=";"
+        )
 
-    
+        # Loop through each coil value
+        for coil in INPUT_COILS:
+            # Check if the coil (column) exists in both datasets
+            if (
+                str(coil) in df_synth.columns
+                and str(coil) in df_synth_single.columns
+                and str(coil) in df_synth_double.columns
+            ):
+                # Compute the difference for each row
+                diff_ns = df_synth[str(coil)] - df_synth_single[str(coil)]
 
-  
-    df_synth_single = pd.read_csv(f"./output/{args.day}-single/out_spires.csv", sep=";")
-    df_synth_double = pd.read_csv(f"./output/{args.day}-double/out_spires.csv", sep=";")
+                # Plot the differences
+                plt.figure(figsize=(16, 9))
+                plt.plot(
+                    diff_ns, label=f"Difference in column {coil}", color="tab:blue"
+                )
+                plt.title(
+                    f"{args.day}\nDifference between df_synth and df_synth_single for Coil {coil}"
+                )
+                plt.xlabel("Row Index")
+                plt.ylabel("Difference")
+                plt.legend()
+                plt.grid(True)
 
-    # Loop through each coil value
-    for coil in INPUT_COILS:
-    # Check if the coil (column) exists in both datasets
-        if str(coil) in df_synth.columns and str(coil) in df_synth_single.columns and str(coil) in df_synth_double.columns:
-            # Compute the difference for each row
-            diff_ns = df_synth[str(coil)] - df_synth_single[str(coil)]
-            
-            # Plot the differences
-            plt.figure(figsize=(16, 9))
-            plt.plot(diff_ns, label=f"Difference in column {coil}", color="tab:blue")
-            plt.title(f"{args.day}\nDifference between df_synth and df_synth_single for Coil {coil}")
-            plt.xlabel("Row Index")
-            plt.ylabel("Difference")
-            plt.legend()
-            plt.grid(True)
-            
-            # Save the plot or show it
-            plt.savefig(f"./output/{args.day}/coil_{coil}_difference_single.png")
-            plt.close()
+                # Save the plot or show it
+                plt.savefig(f"./output/{args.day}/coil_{coil}_difference_single.png")
+                plt.close()
 
-            #Plot the difference with the double
-            diff_nd = df_synth[str(coil)] - df_synth_double[str(coil)]
-            plt.figure(figsize=(16, 9))
-            plt.plot(diff_nd, label=f"Difference in column {coil}", color="tab:blue")
-            plt.title(f"{args.day}\nDifference between df_synth and df_synth_double for Coil {coil}")
-            plt.xlabel("Row Index")
-            plt.ylabel("Difference")
-            plt.legend()
-            plt.grid(True)
-            
-            # Save the plot or show it
-            plt.savefig(f"./output/{args.day}/coil_{coil}_difference_double.png")
-            plt.close()
+                # Plot the difference with the double
+                diff_nd = df_synth[str(coil)] - df_synth_double[str(coil)]
+                plt.figure(figsize=(16, 9))
+                plt.plot(
+                    diff_nd, label=f"Difference in column {coil}", color="tab:blue"
+                )
+                plt.title(
+                    f"{args.day}\nDifference between df_synth and df_synth_double for Coil {coil}"
+                )
+                plt.xlabel("Row Index")
+                plt.ylabel("Difference")
+                plt.legend()
+                plt.grid(True)
 
+                # Save the plot or show it
+                plt.savefig(f"./output/{args.day}/coil_{coil}_difference_double.png")
+                plt.close()
 
-        else:
-            print(f"Column {coil} not found in one of the datasets.")
-
-       
+            else:
+                print(f"Column {coil} not found in one of the datasets.")
