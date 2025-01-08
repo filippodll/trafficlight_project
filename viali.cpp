@@ -46,22 +46,24 @@ typedef std::jthread thread_t;
 #endif
 
 int main(int argc, char* argv[]) {
-  if (argc != 10) {
-    std::cerr << "Usage: " << argv[0]
-              << " <SEED> <DAY> <GRANULARITY> <DELAY> <DATA_FOLDER> <FLOW_PERCENTAGE> "
-                 "<OPTIMIZE> <OPT-THRESHOLD> <OPT-TOLERANCE>\n";
+  if (argc != 11) {
+    std::cerr
+        << "Usage: " << argv[0]
+        << " <SEED> <ALPHA> <DAY> <GRANULARITY> <DELAY> <DATA_FOLDER> <FLOW_PERCENTAGE> "
+           "<OPTIMIZE> <OPT-THRESHOLD> <OPT-TOLERANCE>\n";
     return 1;
   }
 
   int const SEED{std::stoi(argv[1])};             // seed for random number generator
-  std::string const DAY{argv[2]};                 // day of the week
-  int const GRANULARITY{std::stoi(argv[3])};      // granularity of the data in seconds
-  int const DELAY{std::stoi(argv[4])};            // delay in granularity
-  std::string const DATA_FOLDER{argv[5]};         // folder containing the data files
-  int const FLOW_PERCENTAGE{std::stoi(argv[6])};  // percentage of the maximum flow
-  bool const OPTIMIZE{std::stoi(argv[7]) > 0};    // optimize the graph
-  auto const OPT_THRESHOLD{std::stod(argv[8])};
-  auto const OPT_TOLERANCE{std::stod(argv[9])};
+  double const ALPHA{std::stod(argv[2])};         // alpha parameter for the dynamics
+  std::string const DAY{argv[3]};                 // day of the week
+  int const GRANULARITY{std::stoi(argv[4])};      // granularity of the data in seconds
+  int const DELAY{std::stoi(argv[5])};            // delay in granularity
+  std::string const DATA_FOLDER{argv[6]};         // folder containing the data files
+  int const FLOW_PERCENTAGE{std::stoi(argv[7])};  // percentage of the maximum flow
+  bool const OPTIMIZE{std::stoi(argv[8]) > 0};    // optimize the graph
+  auto const OPT_THRESHOLD{std::stod(argv[9])};
+  auto const OPT_TOLERANCE{std::stod(argv[10])};
 
   std::string const INPUT_FILE{std::format("{}/{}.csv", DATA_FOLDER, DAY)};
   std::string OUT_FOLDER{std::format("./output/{}", DAY)};
@@ -437,14 +439,15 @@ int main(int argc, char* argv[]) {
   dict << '}' << std::endl;
   dict.close();
   // Create the dynamics
-  Dynamics dynamics{graph, SEED, 0.95};
+  Dynamics dynamics{graph, SEED, ALPHA};
   if (OPTIMIZE) {
     dynamics.setDataUpdatePeriod(INTERVAL_AGENTS_IN);
   }
-  dynamics.setSpeedFluctuationSTD(0.1);
+  // dynamics.setSpeedFluctuationSTD(0.1);
   // dynamics.setMaxFlowPercentage(0.75);
 
   auto const& streets{dynamics.graph().streetSet()};
+  // auto const& nodes{dynamics.graph().nodeSet()};
 
   std::cout << std::format("Importing input data...") << std::endl;
   std::ifstream ifs(INPUT_FILE);
@@ -562,6 +565,14 @@ int main(int argc, char* argv[]) {
   std::map<dsm::Id, double> srcProbabilities, dstProbabilities;
 
   auto const& adjMatrix{dynamics.graph().adjMatrix()};
+  // auto const& degreeVector{adjMatrix.getDegreeVector()};
+
+  // for (auto const& [id, value] : degreeVector) {
+  //   if (value > 2) {
+  //     continue;
+  //   }
+  //   nodes.at(id)->setTransportCapacity(std::numeric_limits<int16_t>::max());
+  // }
 
   std::map<dsm::Id, data_t> synthetic_data;
 
@@ -814,6 +825,15 @@ int main(int argc, char* argv[]) {
     // OUTPUTS   -   -   -
 
     if (dynamics.time() % GRANULARITY == 0) {
+      // std::clog << "Time: " << dynamics.time() << std::endl;
+      // for (const auto& [id, street] : dynamics.graph().streetSet()) {
+      //   std::clog << "Street " << id << '\t';
+      //   for (auto i{0}; i < street->nLanes(); ++i) {
+      //     auto const& queue{street->queue(i)};
+      //     std::clog << queue.size() << ' ';
+      //   }
+      //   std::clog << std::endl;
+      // }
       const auto& meanSpeed{dynamics.streetMeanSpeed()};
       const auto& meanDensity{dynamics.streetMeanDensity(false)};
       const auto& meanFlow{dynamics.streetMeanFlow()};
