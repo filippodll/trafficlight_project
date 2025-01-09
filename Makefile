@@ -1,10 +1,10 @@
 viali: 
 	clear
 	cmake -B build -DCMAKE_BUILD_TYPE=Release && make -C build
-	# echo "\nStarting normal simulation\n"
-	# ./viali.out 69 0.95 2023-05-11 300 1 ./signal 100 0 0.35 1
-	# echo "\nStarting simulation with optimization strategy one\n"
-	# ./viali.out 69 0.95 2023-05-11 300 1 ./signal 100 1 0.4 0.3
+	echo "\nStarting normal simulation\n"
+	./viali.out 69 0.95 2023-05-11 300 1 ./signal 100 0 0.35 1
+	echo "\nStarting simulation with optimization strategy one\n"
+	./viali.out 69 0.95 2023-05-11 300 1 ./signal 100 1 0.4 0.3
 	echo "\nStarting simulation with optimization strategy two\n"
 	./viali.out 69 0.95 2023-05-11 300 1 ./signal 100 2 0.65 1
 viali_debug: 
