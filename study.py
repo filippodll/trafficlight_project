@@ -315,19 +315,9 @@ if __name__ == "__main__":
         rotation=45,
         fontsize="xx-large",
     )
-    ax2 = ax.twinx()
-    ax2.plot(
-        df_in["total"],
-        label="Total input",
-        color="black",
-        linestyle="--",
-    )
     ax.set_ylabel(r"Mean travel time $(s)$", fontsize="xx-large")
     ax.grid(linestyle="--")
     ax.legend(fontsize="xx-large", loc="upper left")
-    alignYaxes([ax, ax2], [ax.get_yticks()[0], ax2.get_yticks()[0]])
-    ax2.set_ylabel(r"Total input $(veh)$", fontsize="xx-large")
-    ax2.legend(fontsize="xx-large", loc="upper right")
     ax.tick_params(axis="both", which="major", labelsize=14)
     plt.title(f"{args.day}\nMean travel time over time", fontsize="xx-large")
 
