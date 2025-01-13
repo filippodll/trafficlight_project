@@ -166,8 +166,8 @@ if __name__ == "__main__":
                 # substitue zeros with one in data_real
                 diff = diff / np.array([1 if d == 0 else d for d in data_real])
                 diff = diff[8 * 12 : 20 * 12] * 100
-                # if int(idx) != 155:
-                #     df_diff[str(idx)] = diff
+                if int(idx) != 155:
+                    df_diff[str(idx)] = diff
                 # diff = diff * 65 / 85
                 if int(idx) == 155:
                     ax.plot(
@@ -352,6 +352,21 @@ if __name__ == "__main__":
         color="black",
         linestyle="--",
     )
+    # ax2.plot(
+    #     df_data["nGhosts"],
+    #     label="Ghost agents",
+    #     linestyle="--",
+    # )
+    # ax2.plot(
+    #     df_opt_single["nGhosts"],
+    #     label="Ghost agents - single",
+    #     linestyle="--",
+    # )
+    # ax2.plot(
+    #     df_opt_double["nGhosts"],
+    #     label="Ghost agents - double",
+    #     linestyle="--",
+    # )
     ax.set_ylabel(r"Mean density $(veh/km)$", fontsize="xx-large")
     ax.grid(linestyle="--")
     ax.legend(fontsize="xx-large", loc="upper left")
