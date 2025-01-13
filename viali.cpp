@@ -316,8 +316,8 @@ int main(int argc, char* argv[]) {
   santostefano.setCycle(s6_7.id(), dsm::Direction::RIGHT, {90, 0});
   santostefano.setCycle(s6_7.id(), dsm::Direction::LEFTANDSTRAIGHT, {35, 0});
 
-  santostefano.setCycle(s8_7.id(), dsm::Direction::RIGHTANDSTRAIGHT, {90, 0});
-  santostefano.setCycle(s8_7.id(), dsm::Direction::LEFT, {55, 35});
+  santostefano.setCycle(s8_7.id(), dsm::Direction::ANY, {90, 0});
+  // santostefano.setCycle(s8_7.id(), dsm::Direction::LEFT, {55, 35});
 
   santostefano.setCycle(s19_7.id(), dsm::Direction::ANY, {25, 90});
   santostefano.setCycle(s20_7.id(), dsm::Direction::ANY, {25, 90});
@@ -791,9 +791,15 @@ int main(int argc, char* argv[]) {
     }
     // EVOLUTION   -   -   -
 
+    auto nGhosts{0};
+
     if (progress % INTERVAL_AGENTS_IN == 0) {
+      const auto& agents{dynamics.agents()};
+      nGhosts = std::count_if(agents.begin(), agents.end(), [](const auto& agent) {
+        return !agent.second->streetId().has_value();
+      });
       try {
-        dynamics.addAgentsRandomly(nAgents, srcProbabilities, dstProbabilities);
+        dynamics.addAgentsRandomly(nAgents, srcProbabilities, dstProbabilities, 4);
       } catch (const std::exception& e) {
         std::cout << std::format("Error adding agents: {}", e.what()) << std::endl;
         std::cout << std::format("There are still {} agents in the system.",
@@ -825,26 +831,27 @@ int main(int argc, char* argv[]) {
     // OUTPUTS   -   -   -
 
     if (dynamics.time() % GRANULARITY == 0) {
+      // std::pair<dsm::Id, dsm::Size> maxQueue{0, 0};
       // std::clog << "Time: " << dynamics.time() << std::endl;
       // for (const auto& [id, street] : dynamics.graph().streetSet()) {
       //   std::clog << "Street " << id << '\t';
       //   for (auto i{0}; i < street->nLanes(); ++i) {
       //     auto const& queue{street->queue(i)};
+      //     // if (queue.size() > maxQueue.second) {
+      //     //   maxQueue = {id, queue.size()};
+      //     // }
       //     std::clog << queue.size() << ' ';
       //   }
       //   std::clog << std::endl;
       // }
+      // std::clog << "Max queue: " << maxQueue.first << " with " << maxQueue.second
+      //           << " agents" << std::endl;
       const auto& meanSpeed{dynamics.streetMeanSpeed()};
       const auto& meanDensity{dynamics.streetMeanDensity(false)};
       const auto& meanFlow{dynamics.streetMeanFlow()};
       const auto& meanTravelTime{dynamics.meanTravelTime(true)};
-      const auto& agents{dynamics.agents()};
 
       // Count agents if they have streetId == std::nullopt
-      const auto nGhosts{
-          std::count_if(agents.begin(), agents.end(), [](const auto& agent) {
-            return !agent.second->streetId().has_value();
-          })};
 
       out << dynamics.time() << ';' << dynamics.agents().size() << ';' << meanSpeed.mean
           << ';' << meanSpeed.std << ';' << meanDensity.mean << ';' << meanDensity.std
