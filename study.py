@@ -299,15 +299,22 @@ if __name__ == "__main__":
     ########################################################################################
     fig, ax = plt.subplots(figsize=(16, 9))
     ax.plot(df_data["mean_traveltime"], label="Normal")
+    print(f"Mean travel time: {df_data["mean_traveltime"].mean()} s")
     if df_opt_single is not None:
         ax.plot(
             df_opt_single["mean_traveltime"],
             label="Single-tail optimization",
         )
+        print(
+            f"Mean traveltime (single-tail opt): {df_opt_single["mean_traveltime"].mean()} s"
+        )
     if df_opt_double is not None:
         ax.plot(
             df_opt_double["mean_traveltime"],
             label="Double-tail optimization",
+        )
+        print(
+            f"Mean traveltime (double-tail opt): {df_opt_double["mean_traveltime"].mean()} s"
         )
     ax.set_xticks(
         np.arange(0, 288, 12),

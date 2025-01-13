@@ -316,8 +316,8 @@ int main(int argc, char* argv[]) {
   santostefano.setCycle(s6_7.id(), dsm::Direction::RIGHT, {90, 0});
   santostefano.setCycle(s6_7.id(), dsm::Direction::LEFTANDSTRAIGHT, {35, 0});
 
-  santostefano.setCycle(s8_7.id(), dsm::Direction::ANY, {90, 0});
-  // santostefano.setCycle(s8_7.id(), dsm::Direction::LEFT, {55, 35});
+  santostefano.setCycle(s8_7.id(), dsm::Direction::RIGHTANDSTRAIGHT, {90, 0});
+  santostefano.setCycle(s8_7.id(), dsm::Direction::LEFT, {55, 35});
 
   santostefano.setCycle(s19_7.id(), dsm::Direction::ANY, {25, 90});
   santostefano.setCycle(s20_7.id(), dsm::Direction::ANY, {25, 90});
@@ -799,7 +799,7 @@ int main(int argc, char* argv[]) {
         return !agent.second->streetId().has_value();
       });
       try {
-        dynamics.addAgentsRandomly(nAgents, srcProbabilities, dstProbabilities, 4);
+        dynamics.addAgentsRandomly(nAgents, srcProbabilities, dstProbabilities, 0);
       } catch (const std::exception& e) {
         std::cout << std::format("Error adding agents: {}", e.what()) << std::endl;
         std::cout << std::format("There are still {} agents in the system.",
