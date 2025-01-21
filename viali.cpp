@@ -46,7 +46,7 @@ typedef std::jthread thread_t;
 #endif
 
 int main(int argc, char* argv[]) {
-  if (argc != 11) {
+  if (argc != 10) {
     std::cerr
         << "Usage: " << argv[0]
         << " <SEED> <ALPHA> <DAY> <GRANULARITY> <DELAY> <DATA_FOLDER> <FLOW_PERCENTAGE> "
@@ -63,7 +63,6 @@ int main(int argc, char* argv[]) {
   int const FLOW_PERCENTAGE{std::stoi(argv[7])};  // percentage of the maximum flow
   bool const OPTIMIZE{std::stoi(argv[8]) > 0};    // optimize the graph
   auto const OPT_THRESHOLD{std::stod(argv[9])};
-  auto const OPT_TOLERANCE{std::stod(argv[10])};
 
   std::string const INPUT_FILE{std::format("{}/{}.csv", DATA_FOLDER, DAY)};
   std::string OUT_FOLDER{std::format("./output/{}", DAY)};
@@ -107,7 +106,6 @@ int main(int argc, char* argv[]) {
   sargs << "FLOW_PERCENTAGE: " << FLOW_PERCENTAGE << '\n';
   sargs << "OPTIMIZE: " << OPTIMIZE << '\n';
   sargs << "OPT_THRESHOLD: " << OPT_THRESHOLD << '\n';
-  sargs << "OPT_TOLERANCE: " << OPT_TOLERANCE << '\n';
   sargs.close();
 
   std::cout << std::format("Using dsm version: {}", dsm::version()) << std::endl;
@@ -116,134 +114,104 @@ int main(int argc, char* argv[]) {
   std::cout << "Creating road segments..." << std::endl;
   // segmenti viali
   Street s0_1{
-      1, 1, 500., 13.9, std::make_pair(0, 1), 3, "2.10 2.6 6 1"};  // (402) 2.10 2.6 6 1
+      1, std::make_pair(0, 1), 500., 13.9, 3, "2.10 2.6 6 1"};  // (402) 2.10 2.6 6 1
   Street s1_0{
-      2, 1, 500., 13.9, std::make_pair(1, 0), 3, "2.6 2.10 6 1"};  // (499) 2.6 2.10 6 1
+      2, std::make_pair(1, 0), 500., 13.9, 3, "2.6 2.10 6 1"};  // (499) 2.6 2.10 6 1
 
   Street s1_2{
-      3, 1, 400., 13.9, std::make_pair(1, 2), 3, "2.6 4.47 4 1"};  // (501) 2.6 4.47 4 1
+      3, std::make_pair(1, 2), 400., 13.9, 3, "2.6 4.47 4 1"};  // (501) 2.6 4.47 4 1
   Street s2_1{
-      4, 1, 400., 13.9, std::make_pair(2, 1), 3, "4.47 2.6 8 1"};  // (820) 4.47 2.6 8 1
+      4, std::make_pair(2, 1), 400., 13.9, 3, "4.47 2.6 8 1"};  // (820) 4.47 2.6 8 1
 
   Street s2_3{
-      5, 1, 550., 13.9, std::make_pair(2, 3), 3, "4.47 4.46 4 1"};  // (821) 4.47 4.46 4 1
+      5, std::make_pair(2, 3), 550., 13.9, 3, "4.47 4.46 4 1"};  // (821) 4.47 4.46 4 1
   Street s3_2{
-      6, 1, 550., 13.9, std::make_pair(3, 2), 3, "4.46 4.47 8 1"};  // (819) 4.46 4.47 8 1
+      6, std::make_pair(3, 2), 550., 13.9, 3, "4.46 4.47 8 1"};  // (819) 4.46 4.47 8 1
 
   Street s3_4{
-      7, 1, 260., 13.9, std::make_pair(3, 4), 3, "4.46 4.45 4 1"};  // (818) 4.46 4.45 4 1
+      7, std::make_pair(3, 4), 260., 13.9, 3, "4.46 4.45 4 1"};  // (818) 4.46 4.45 4 1
   Street s4_3{
-      8, 1, 260., 13.9, std::make_pair(4, 3), 3, "4.45 4.46 8 1"};  // (815) 4.45 4.46 8 1
+      8, std::make_pair(4, 3), 260., 13.9, 3, "4.45 4.46 8 1"};  // (815) 4.45 4.46 8 1
   Street s4_5{
-      9, 1, 150., 13.9, std::make_pair(4, 5), 3, "4.46 4.45 4 1"};  // (818) 4.46 4.45 4 1
+      9, std::make_pair(4, 5), 150., 13.9, 3, "4.46 4.45 4 1"};  // (818) 4.46 4.45 4 1
 
-  Street s5_4{10, 1, 150., 13.9, std::make_pair(5, 4), 3};
+  Street s5_4{10, std::make_pair(5, 4), 150., 13.9, 3};
 
   Street s5_6{
-      11, 1, 300., 13.9, std::make_pair(5, 6), 3, "4.45 4.44 4 1"};  // (814) 4.45 4.44 4 1
+      11, std::make_pair(5, 6), 300., 13.9, 3, "4.45 4.44 4 1"};  // (814) 4.45 4.44 4 1
   Street s6_5{
-      12, 1, 300., 13.9, std::make_pair(6, 5), 3, "4.44 4.45 8 1"};  // (812) 4.44 4.45 8 1
+      12, std::make_pair(6, 5), 300., 13.9, 3, "4.44 4.45 8 1"};  // (812) 4.44 4.45 8 1
 
   Street s6_7{
-      13, 1, 700., 13.9, std::make_pair(6, 7), 3, "4.44 4.41 4 1"};  // (811) 4.44 4.41 4 1
+      13, std::make_pair(6, 7), 700., 13.9, 3, "4.44 4.41 4 1"};  // (811) 4.44 4.41 4 1
   Street s7_6{
-      14, 1, 700., 13.9, std::make_pair(7, 6), 3, "4.41 4.44 8 1"};  // (801) 4.41 4.44 8 1
+      14, std::make_pair(7, 6), 700., 13.9, 3, "4.41 4.44 8 1"};  // (801) 4.41 4.44 8 1
 
   Street s7_8{
-      15, 1, 230., 13.9, std::make_pair(7, 8), 3, "4.41 4.42 4 1"};  // (800) 4.41 4.42 4 1
+      15, std::make_pair(7, 8), 230., 13.9, 3, "4.41 4.42 4 1"};  // (800) 4.41 4.42 4 1
   Street s8_7{
-      16, 1, 230., 13.9, std::make_pair(8, 7), 3, "4.42 4.41 8 1"};  // (803) 4.42 4.41 8 1
+      16, std::make_pair(8, 7), 230., 13.9, 3, "4.42 4.41 8 1"};  // (803) 4.42 4.41 8 1
 
   // strade secondarie
 
   Street s9_1{17,
-              1,
+              std::make_pair(9, 1),
               750.,
               8.3,
-              std::make_pair(9, 1),
               2,
               "2.5 2.6 2 1"};  // (496) 2.5 2.6 2 1      0.127 2.6 1 1 //saragozza (1)
   Street s1_9{
-      18, 1, 750., 8.3, std::make_pair(1, 9), 2, "2.6 2.5 6 1"};  // (500) 2.6 2.5 6 1
-  Street s10_1{19, 1, 250., 8.3, std::make_pair(10, 1), 1};
+      18, std::make_pair(1, 9), 750., 8.3, 2, "2.6 2.5 6 1"};  // (500) 2.6 2.5 6 1
+  Street s10_1{19, std::make_pair(10, 1), 250., 8.3, 1};
 
-  Street s2_11{20, 1, 300., 8.3, std::make_pair(2, 11), 1};  // vallescura  (2)
-  Street s11_2{21,
-               1,
-               300.,
-               8.3,
-               std::make_pair(11, 2),
-               1,
-               "0.127 4.47 2 1"};  // (278) 0.127 4.47 2 1
+  Street s2_11{20, std::make_pair(2, 11), 300., 8.3, 1};  // vallescura  (2)
+  Street s11_2{
+      21, std::make_pair(11, 2), 300., 8.3, 1, "0.127 4.47 2 1"};  // (278) 0.127 4.47 2 1
   Street s12_2{22,
-               1,
+               std::make_pair(12, 2),
                160.,
                8.3,
-               std::make_pair(12, 2),
                1,
                "0.127 4.47 6 1"};  // Malpertuso (279) 0.127 4.47 6 1
 
   Street s13_3{23,
-               1,
+               std::make_pair(13, 3),
                500.,
                8.3,
-               std::make_pair(13, 3),
                2,
                "0.127 4.46 2 1"};  // (273) 0.127 4.46 2 1   (274) 0.127 4.46 3
                                    // 1    //san mamolo  (3)
-  Street s3_13{24,
-               1,
-               500.,
-               8.3,
-               std::make_pair(3, 13),
-               1,
-               "4.46 0.127 6 1"};  // (816) 4.46 0.127 6 1
-  Street s3_14{25, 1, 240., 8.3, std::make_pair(3, 14), 1};
-  Street s14_3{26,
-               1,
-               240.,
-               8.3,
-               std::make_pair(14, 3),
-               1,
-               "0.127 4.46 6 1"};  // (275) 0.127 4.46 6 1
+  Street s3_13{
+      24, std::make_pair(3, 13), 500., 8.3, 1, "4.46 0.127 6 1"};  // (816) 4.46 0.127 6 1
+  Street s3_14{25, std::make_pair(3, 14), 240., 8.3, 1};
+  Street s14_3{
+      26, std::make_pair(14, 3), 240., 8.3, 1, "0.127 4.46 6 1"};  // (275) 0.127 4.46 6 1
 
-  Street s4_15{27, 1, 190., 8.3, std::make_pair(4, 15), 1};  // savenella  (3)
+  Street s4_15{27, std::make_pair(4, 15), 190., 8.3, 1};  // savenella  (3)
 
   Street s16_5{28,
-               1,
+               std::make_pair(16, 5),
                270.,
                8.3,
-               std::make_pair(16, 5),
                1,
                "0.127 4.45 6 1"};  // (270) 0.127 4.45 6 1 //rubbiani   (4)
 
   Street s17_6{29,
-               1,
+               std::make_pair(17, 6),
                400.,
                8.3,
-               std::make_pair(17, 6),
                1,
                "0.127 4.44 2 1"};  // (266) 0.127 4.44 2 1 //castiglione  (6)
-  Street s6_17{30, 1, 400., 8.3, std::make_pair(6, 17), 1};
-  Street s6_18{31, 1, 200., 8.3, std::make_pair(6, 18), 1};
-  Street s18_6{32,
-               1,
-               200.,
-               8.3,
-               std::make_pair(18, 6),
-               1,
-               "0.127 4.44 6 1"};  // (267) 0.127 4.44 6 1
+  Street s6_17{30, std::make_pair(6, 17), 400., 8.3, 1};
+  Street s6_18{31, std::make_pair(6, 18), 200., 8.3, 1};
+  Street s18_6{
+      32, std::make_pair(18, 6), 200., 8.3, 1, "0.127 4.44 6 1"};  // (267) 0.127 4.44 6 1
 
-  Street s19_7{33, 1, 240., 8.3, std::make_pair(19, 7), 1};  // santo stefano (7)
+  Street s19_7{33, std::make_pair(19, 7), 240., 8.3, 1};  // santo stefano (7)
   Street s7_19{
-      34, 1, 240., 8.3, std::make_pair(7, 19), 2, "4.41 4.33 6 1"};  // (799) 4.41 4.33 6 1
-  Street s20_7{35,
-               1,
-               350.,
-               8.3,
-               std::make_pair(20, 7),
-               1,
-               "0.127 4.41 6 1"};  // (263) 0.127 4.41 6 1
+      34, std::make_pair(7, 19), 240., 8.3, 2, "4.41 4.33 6 1"};  // (799) 4.41 4.33 6 1
+  Street s20_7{
+      35, std::make_pair(20, 7), 350., 8.3, 1, "0.127 4.41 6 1"};  // (263) 0.127 4.41 6 1
 
   std::cout << "Creating traffic lights..." << std::endl;
   // saragozza
@@ -403,8 +371,6 @@ int main(int argc, char* argv[]) {
   graph.buildAdj();
   std::cout << "Adjusting node capacities..." << std::endl;
   graph.adjustNodeCapacities();
-  std::cout << "Normalizing street capacities..." << std::endl;
-  graph.normalizeStreetCapacities();
 
   graph.exportCoordinates("./constants/coords.csv");
 
@@ -421,7 +387,7 @@ int main(int argc, char* argv[]) {
   }
   adj.close();
 
-  std::unordered_map<std::string_view, dsm::Id> coilmap;
+  std::map<std::string, dsm::Id> coilmap;
   std::ofstream dict("./structures_out.py");
   dict << "COIL_DICT = {" << std::endl;
   for (auto const& [id, street] : graph.streetSet()) {
@@ -471,7 +437,7 @@ int main(int argc, char* argv[]) {
 
     std::getline(iss, token, ';');
     if (!coilmap.contains(token)) {
-      std::cout << std::format("Unknown coil {}. Skipping.", token) << std::endl;
+      std::cout << std::format("Unknown coil \"{}\". Skipping.", token) << std::endl;
       continue;
     }
     dsm::Id streetId = coilmap.at(token);
@@ -824,8 +790,7 @@ int main(int argc, char* argv[]) {
     dynamics.evolve(false);
 
     if (OPTIMIZE && dynamics.time() % GRANULARITY == 0) {
-      dynamics.optimizeTrafficLights(
-          OPT_THRESHOLD, OPT_TOLERANCE, optType);  // 0.3, 0.8, NEAREST_NEIGHBOUR
+      dynamics.optimizeTrafficLights(OPT_THRESHOLD, optType);  // 0.3, NEAREST_NEIGHBOUR
     }
 
     // OUTPUTS   -   -   -
