@@ -11,3 +11,6 @@ output
 *.dat
 *.out
 *.mp4
+
+# Others
+structures_out.py
