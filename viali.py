@@ -21,6 +21,8 @@ if __name__ == "__main__":
     cmd("clear")
     cmd("cmake -B build -DCMAKE_BUILD_TYPE=Release && make -C build")
     cmd(f"./viali.out 69 0.6 {args.date} 300 1 ./signal 100 0 {args.threshold}")
+    cmd(f"./viali_stoc.out 69 0.6 {args.date} 300 1 ./signal 100 0 {args.threshold}")
+    cmd(f"./viali_notl.out 69 0.6 {args.date} 300 1 ./signal 100")
     cmd(f"./viali.out 69 0.6 {args.date} 300 1 ./signal 100 1 {args.threshold}")
     cmd(f"./viali.out 69 0.6 {args.date} 300 1 ./signal 100 2 {args.threshold}")
     cmd(f"python study.py --day {args.date} --n-nodes 21 --input-folder ./signal")

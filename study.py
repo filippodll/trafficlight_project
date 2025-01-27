@@ -92,7 +92,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     df_real = pd.read_csv(f"{args.input_folder}/{args.day}.csv", sep=";")
-    df_synth = pd.read_csv(f"./output/{args.day}/out_spires.csv", sep=";")
+    df_synth = pd.read_csv(f"./output/{args.day}/output_counts.csv", sep=";")
 
     OUTPUT_COILS = [21, 30, 76, 155, 166]
     INPUT_COILS = [1, 175, 190, 211, 233, 254, 276, 297, 341, 363, 384, 427]
