@@ -482,7 +482,7 @@ int main(int argc, char* argv[]) {
 
   std::vector<dsm::Id> outNodeList;
   outNodeList.reserve(output_data.size());
-  for (const auto& id : outputCoils) {
+  for (auto const& id : outputCoils) {
     auto const& nid{streets.at(id)->nodePair().second};
     outNodeList.push_back(nid);
   }
@@ -499,31 +499,14 @@ int main(int argc, char* argv[]) {
   });
   std::ofstream out(OUT_FOLDER + "data.csv");
   out << "time;n_agents;mean_speed;mean_speed_err;mean_density;mean_density_"
-         "err;mean_flow;mean_flow_err;mean_traveltime;mean_traveltime_err;nGhosts\n";
-  std::ofstream streetDensity(OUT_FOLDER + "densities.csv");
+         "err;mean_flow;mean_flow_err;mean_traveltime;mean_traveltime_err;mean_"
+         "travelspeed;mean_travelspeed_err;nGhosts\n";
   std::ofstream streetQueues(OUT_FOLDER + "queues.csv");
-  streetDensity << "time";
   streetQueues << "time";
-  for (const auto& [id, street] : dynamics.graph().streetSet()) {
-    streetDensity << ';' << id;
+  for (auto const& [id, street] : dynamics.graph().streetSet()) {
     streetQueues << ';' << id;
   }
-  streetDensity << std::endl;
   streetQueues << std::endl;
-
-  std::ofstream nodeDensity(OUT_FOLDER + "nodedensities.csv");
-  nodeDensity << "time";
-  for (const auto& [id, node] : dynamics.graph().nodeSet()) {
-    nodeDensity << ';' << id;
-  }
-  nodeDensity << std::endl;
-
-  std::ofstream outSpires(OUT_FOLDER + "out_spires.csv");
-  outSpires << "time";
-  for (const auto& [id, street] : dynamics.graph().streetSet()) {
-    outSpires << ';' << id;
-  }
-  outSpires << std::endl;
 
   size_t current_index{0};
   dsm::Size nAgents{0};
@@ -703,13 +686,13 @@ int main(int argc, char* argv[]) {
           srcProbabilities.begin(),
           srcProbabilities.end(),
           0.,
-          [](double acc, const auto& pair) { return acc + pair.second; })};
+          [](double acc, auto const& pair) { return acc + pair.second; })};
       nAgents = static_cast<dsm::Size>(inputSum);
       double outputSum{std::accumulate(
           dstProbabilities.begin(),
           dstProbabilities.end(),
           0.,
-          [](double acc, const auto& pair) { return acc + pair.second; })};
+          [](double acc, auto const& pair) { return acc + pair.second; })};
       if (inputSum < 0 || outputSum < 0) {
         std::cout << std::format(
                          "Negative input {} or output {} weight sum", inputSum, outputSum)
@@ -760,8 +743,8 @@ int main(int argc, char* argv[]) {
     auto nGhosts{0};
 
     if (progress % INTERVAL_AGENTS_IN == 0) {
-      const auto& agents{dynamics.agents()};
-      nGhosts = std::count_if(agents.begin(), agents.end(), [](const auto& agent) {
+      auto const& agents{dynamics.agents()};
+      nGhosts = std::count_if(agents.begin(), agents.end(), [](auto const& agent) {
         return !agent.second->streetId().has_value();
       });
       try {
@@ -798,7 +781,7 @@ int main(int argc, char* argv[]) {
     if (dynamics.time() % GRANULARITY == 0) {
       // std::pair<dsm::Id, dsm::Size> maxQueue{0, 0};
       // std::clog << "Time: " << dynamics.time() << std::endl;
-      // for (const auto& [id, street] : dynamics.graph().streetSet()) {
+      // for (auto const& [id, street] : dynamics.graph().streetSet()) {
       //   std::clog << "Street " << id << '\t';
       //   for (auto i{0}; i < street->nLanes(); ++i) {
       //     auto const& queue{street->queue(i)};
@@ -811,47 +794,34 @@ int main(int argc, char* argv[]) {
       // }
       // std::clog << "Max queue: " << maxQueue.first << " with " << maxQueue.second
       //           << " agents" << std::endl;
-      const auto& meanSpeed{dynamics.streetMeanSpeed()};
-      const auto& meanDensity{dynamics.streetMeanDensity(false)};
-      const auto& meanFlow{dynamics.streetMeanFlow()};
-      const auto& meanTravelTime{dynamics.meanTravelTime(true)};
+      dynamics.saveTravelSpeeds(OUT_FOLDER + "speeds.csv");
+      auto const& meanSpeed{dynamics.streetMeanSpeed()};
+      auto const& meanDensity{dynamics.streetMeanDensity(false)};
+      auto const& meanFlow{dynamics.streetMeanFlow()};
+      auto const& meanTravelTime{dynamics.meanTravelTime()};
+      auto const& meanTravelSpeed{dynamics.meanTravelSpeed()};
 
       // Count agents if they have streetId == std::nullopt
 
       out << dynamics.time() << ';' << dynamics.agents().size() << ';' << meanSpeed.mean
           << ';' << meanSpeed.std << ';' << meanDensity.mean << ';' << meanDensity.std
           << ';' << meanFlow.mean << ';' << meanFlow.std << ';' << meanTravelTime.mean
-          << ';' << meanTravelTime.std << ';' << nGhosts << std::endl;
+          << ';' << meanTravelTime.std << ';' << meanTravelSpeed.mean << ';'
+          << meanTravelSpeed.std << ';' << nGhosts << std::endl;
     }
     if (dynamics.time() % GRANULARITY == 0) {
-      outSpires << dynamics.time();
-      for (const auto& [id, street] : dynamics.graph().streetSet()) {
-        if (street->isSpire()) {
-          auto& spire = dynamic_cast<dsm::SpireStreet&>(*street);
-          outSpires << ';' << spire.outputCounts(true);
-        } else {
-          outSpires << ';';
-        }
-      }
-      outSpires << std::endl;
+      dynamics.saveOutputStreetCounts(OUT_FOLDER + "output_counts.csv", true);
     }
 
     if (dynamics.time() % GRANULARITY == 0) {
-      streetDensity << dynamics.time();
+      dynamics.saveStreetDensities(OUT_FOLDER + "densities.csv");
       streetQueues << dynamics.time();
-      for (const auto& [id, street] : dynamics.graph().streetSet()) {
-        streetDensity << ';' << street->density(true);
+      for (auto const& [id, street] : dynamics.graph().streetSet()) {
         streetQueues << ';'
                      << static_cast<double>(street->nExitingAgents()) /
                             street->capacity();
       }
-      streetDensity << std::endl;
       streetQueues << std::endl;
-      nodeDensity << dynamics.time();
-      for (const auto& [id, node] : dynamics.graph().nodeSet()) {
-        nodeDensity << ';' << node->density();
-      }
-      nodeDensity << std::endl;
     }
 
     ++progress;
@@ -863,10 +833,7 @@ int main(int argc, char* argv[]) {
                            dynamics.agents().size())
             << std::endl;
 
-  outSpires.close();
-  streetDensity.close();
   streetQueues.close();
-  nodeDensity.close();
   out.close();
 
   std::cout << std::format("Writing synthetic data to file...") << std::endl;
