@@ -1,5 +1,7 @@
 import argparse
 import matplotlib.pyplot as plt
+
+plt.style.use("tableau-colorblind10")
 import numpy as np
 import pandas as pd
 from structures_out import COIL_DICT
@@ -36,6 +38,9 @@ def alignYaxes(axes, align_values=None):
         aligns = align_values
 
     bounds = [aii.get_ylim() for aii in axes]
+    for bound in bounds:
+        if bound[0] < 0:
+            bound = (0, bound[1])
 
     # align at some points
     ticks_align = [ticks[ii] - aligns[ii] for ii in range(nax)]
@@ -54,18 +59,12 @@ def alignYaxes(axes, align_values=None):
     new_ticks = [new_ticks / 10.0 ** igs[ii] for ii in range(nax)]
     new_ticks = [new_ticks[ii] + aligns[ii] for ii in range(nax)]
 
-    # set the lower bound to 0
+    # find the lower bound
+    idx_l = 0
     for i in range(len(new_ticks[0])):
-        if any(
-            [
-                new_ticks[jj][i] > bounds[jj][0] and new_ticks[jj][i] > 0
-                for jj in range(nax)
-            ]
-        ):
+        if any([new_ticks[jj][i] > bounds[jj][0] for jj in range(nax)]):
             idx_l = i - 1
             break
-    else:
-        idx_l = 0
 
     # find the upper bound
     idx_r = 0
@@ -94,7 +93,12 @@ if __name__ == "__main__":
     )
     parser.add_argument("--input-folder", type=str, required=True, help="Input folder")
     parser.add_argument("--print-coildiff", action="store_true", help="Print coil diff")
+    parser.add_argument(
+        "--start-time", type=int, default=0, help="Start time"
+    )  # in hours
     args = parser.parse_args()
+
+    args.start_time = args.start_time * 12
 
     df_real = pd.read_csv(f"{args.input_folder}/{args.day}.csv", sep=";")
     df_synth = pd.read_csv(f"./output/{args.day}/output_counts.csv", sep=";")
@@ -270,13 +274,18 @@ if __name__ == "__main__":
     except FileNotFoundError:
         print(f"No optimized data found for {args.day}")
 
+    if args.start_time > 0:
+        df_data = df_data[args.start_time :]
+        df_in = df_in[args.start_time :]
+        if df_opt_single is not None:
+            df_opt_single = df_opt_single[args.start_time :]
+        if df_opt_double is not None:
+            df_opt_double = df_opt_double[args.start_time :]
+
     ########################################################################################
     # Plot the mean travel time over the mean density
     ########################################################################################
     plt.figure(figsize=(16, 9))
-    plt.plot(
-        df_data["mean_density"], df_data["mean_traveltime"], label="Normal", marker="o"
-    )
     if df_opt_single is not None:
         plt.plot(
             df_opt_single["mean_density"],
@@ -291,6 +300,9 @@ if __name__ == "__main__":
             label="Double-tail optimization",
             marker="^",
         )
+    plt.plot(
+        df_data["mean_density"], df_data["mean_traveltime"], label="Normal", marker="o"
+    )
     plt.xlabel(r"Mean density $(veh/km)$", fontsize="xx-large")
     plt.ylabel(r"Mean travel time $(s)$", fontsize="xx-large")
     plt.grid(linestyle="--")
@@ -303,15 +315,17 @@ if __name__ == "__main__":
     # Plot the mean travel time over time
     ########################################################################################
     fig, ax = plt.subplots(figsize=(16, 9))
-    ax.plot(df_data["mean_traveltime"], label="Normal")
-    print(f"Mean travel time: {df_data["mean_traveltime"].mean()} s")
+    print(f"Day {args.day}")
+    print(
+        f"Mean travel time: {int(df_data["mean_traveltime"].mean())} ± {int(df_data["mean_traveltime"].std())} s"
+    )
     if df_opt_single is not None:
         ax.plot(
             df_opt_single["mean_traveltime"],
             label="Single-tail optimization",
         )
         print(
-            f"Mean traveltime (single-tail opt): {df_opt_single["mean_traveltime"].mean()} s"
+            f"Mean traveltime (single-tail opt): {int(df_opt_single["mean_traveltime"].mean())} ± {int(df_opt_single["mean_traveltime"].std())} s"
         )
     if df_opt_double is not None:
         ax.plot(
@@ -319,11 +333,15 @@ if __name__ == "__main__":
             label="Double-tail optimization",
         )
         print(
-            f"Mean traveltime (double-tail opt): {df_opt_double["mean_traveltime"].mean()} s"
+            f"Mean traveltime (double-tail opt): {int(df_opt_double["mean_traveltime"].mean())} ± {int(df_opt_double["mean_traveltime"].std())} s"
         )
+    ax.plot(df_data["mean_traveltime"], label="Normal")
     ax.set_xticks(
-        np.arange(0, 288, 12),
-        [f"{int(t // 12):02d}:{int(t % 12) * 5:02d}" for t in np.arange(0, 288, 12)],
+        np.arange(args.start_time, 288, 12),
+        [
+            f"{int(t // 12):02d}:{int(t % 12) * 5:02d}"
+            for t in np.arange(args.start_time, 288, 12)
+        ],
         rotation=45,
         fontsize="xx-large",
     )
@@ -339,7 +357,6 @@ if __name__ == "__main__":
     # Plot the mean density over time
     ########################################################################################
     fig, ax = plt.subplots(figsize=(16, 9))
-    ax.plot(df_data["time"], df_data["mean_density"], label="Normal")
     if df_opt_single is not None:
         ax.plot(
             df_opt_single["time"],
@@ -352,9 +369,13 @@ if __name__ == "__main__":
             df_opt_double["mean_density"],
             label="Double-tail optimization",
         )
+    ax.plot(df_data["time"], df_data["mean_density"], label="Normal")
     ax.set_xticks(
-        np.arange(0, 288, 12),
-        [f"{int(t // 12):02d}:{int(t % 12) * 5:02d}" for t in np.arange(0, 288, 12)],
+        np.arange(args.start_time, 288, 12),
+        [
+            f"{int(t // 12):02d}:{int(t % 12) * 5:02d}"
+            for t in np.arange(args.start_time, 288, 12)
+        ],
         rotation=45,
     )
     ax2 = ax.twinx()
@@ -382,9 +403,14 @@ if __name__ == "__main__":
     ax.set_ylabel(r"Mean density $(veh/km)$", fontsize="xx-large")
     ax.grid(linestyle="--")
     ax.legend(fontsize="xx-large", loc="upper left")
-    alignYaxes([ax, ax2], [0, 0])
+    ticks = alignYaxes([ax, ax2], [0, 0])
     ax2.set_ylabel(r"Total input $(veh)$", fontsize="xx-large")
     ax2.legend(fontsize="xx-large", loc="upper right")
+    ax.set_ybound(-1)
+    # set bound of ax2 proportional to ax baisn gon ticks
+    ratio = (ticks[1][1] - ticks[1][0]) / (ticks[0][1] - ticks[0][0])
+    ax2.set_ybound(-ratio)
+
     plt.tick_params(axis="both", which="major", labelsize=14)
     plt.title(f"{args.day}\nMean density over time", fontsize="xx-large")
     plt.savefig(f"./output/{args.day}/density_time.png")

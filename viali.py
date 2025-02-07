@@ -27,4 +27,6 @@ if __name__ == "__main__":
         # cmd(f"./viali_notl.out 69 0.6 {args.date} 300 1 ./signal 100")
         cmd(f"./viali.out 69 0.6 {args.date} 300 1 ./signal 100 1 {args.threshold}")
         cmd(f"./viali.out 69 0.6 {args.date} 300 1 ./signal 100 2 {args.threshold}")
-    cmd(f"python study.py --day {args.date} --n-nodes 21 --input-folder ./signal")
+    cmd(
+        f"python study.py --day {args.date} --n-nodes 21 --input-folder ./signal --start-time 5"
+    )
