@@ -25,7 +25,6 @@ def alignYaxes(axes, align_values=None):
         A new sets of ticks are computed for each axis in <axes> but with equal
         length.
     """
-    from matplotlib.pyplot import MaxNLocator
 
     nax = len(axes)
     ticks = [aii.get_yticks() for aii in axes]
@@ -50,17 +49,23 @@ def alignYaxes(axes, align_values=None):
     # put all axes ticks into a single array, then compute new ticks for all
     comb_ticks = np.concatenate(log_ticks)
     comb_ticks.sort()
-    locator = MaxNLocator(nbins="auto", steps=[1, 2, 2.5, 3, 4, 5, 8, 10])
+    locator = plt.MaxNLocator(nbins="auto", steps=[1, 2, 2.5, 3, 4, 5, 8, 10])
     new_ticks = locator.tick_values(comb_ticks[0], comb_ticks[-1])
     new_ticks = [new_ticks / 10.0 ** igs[ii] for ii in range(nax)]
     new_ticks = [new_ticks[ii] + aligns[ii] for ii in range(nax)]
 
-    # find the lower bound
-    idx_l = 0
+    # set the lower bound to 0
     for i in range(len(new_ticks[0])):
-        if any([new_ticks[jj][i] > bounds[jj][0] for jj in range(nax)]):
+        if any(
+            [
+                new_ticks[jj][i] > bounds[jj][0] and new_ticks[jj][i] > 0
+                for jj in range(nax)
+            ]
+        ):
             idx_l = i - 1
             break
+    else:
+        idx_l = 0
 
     # find the upper bound
     idx_r = 0
@@ -377,7 +382,7 @@ if __name__ == "__main__":
     ax.set_ylabel(r"Mean density $(veh/km)$", fontsize="xx-large")
     ax.grid(linestyle="--")
     ax.legend(fontsize="xx-large", loc="upper left")
-    alignYaxes([ax, ax2], [ax.get_yticks()[0], ax2.get_yticks()[0]])
+    alignYaxes([ax, ax2], [0, 0])
     ax2.set_ylabel(r"Total input $(veh)$", fontsize="xx-large")
     ax2.legend(fontsize="xx-large", loc="upper right")
     plt.tick_params(axis="both", which="major", labelsize=14)

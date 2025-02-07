@@ -17,12 +17,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "-t", "--threshold", required=True, type=float, help="Threshold"
     )
+    parser.add_argument("-r", "--run", action="store_true", help="Run the simulation")
     args = parser.parse_args()
     cmd("clear")
-    cmd("cmake -B build -DCMAKE_BUILD_TYPE=Release && make -C build")
-    cmd(f"./viali.out 69 0.6 {args.date} 300 1 ./signal 100 0 {args.threshold}")
-    cmd(f"./viali_stoc.out 69 0.6 {args.date} 300 1 ./signal 100 0 {args.threshold}")
-    cmd(f"./viali_notl.out 69 0.6 {args.date} 300 1 ./signal 100")
-    cmd(f"./viali.out 69 0.6 {args.date} 300 1 ./signal 100 1 {args.threshold}")
-    cmd(f"./viali.out 69 0.6 {args.date} 300 1 ./signal 100 2 {args.threshold}")
+    if args.run:
+        cmd("cmake -B build -DCMAKE_BUILD_TYPE=Release && make -C build")
+        cmd(f"./viali.out 69 0.6 {args.date} 300 1 ./signal 100 0 {args.threshold}")
+        # cmd(f"./viali_stoc.out 69 0.6 {args.date} 300 1 ./signal 100 0 {args.threshold}")
+        # cmd(f"./viali_notl.out 69 0.6 {args.date} 300 1 ./signal 100")
+        cmd(f"./viali.out 69 0.6 {args.date} 300 1 ./signal 100 1 {args.threshold}")
+        cmd(f"./viali.out 69 0.6 {args.date} 300 1 ./signal 100 2 {args.threshold}")
     cmd(f"python study.py --day {args.date} --n-nodes 21 --input-folder ./signal")
