@@ -22,8 +22,6 @@ std::atomic<bool> bExitFlag{false};
 
 const std::string IN_COORDS{"./coordinates.dsm"};  // input coords file
 
-// Compatible with dsm 1.3.8
-
 using Dynamics = dsm::FirstOrderDynamics;
 using Street = dsm::Street;
 using TrafficLight = dsm::TrafficLight;
@@ -46,11 +44,12 @@ typedef std::jthread thread_t;
 #endif
 
 int main(int argc, char* argv[]) {
+  // dsm::Logger::setLogLevel(dsm::log_level_t::DEBUG);
   if (argc != 10) {
     std::cerr
         << "Usage: " << argv[0]
         << " <SEED> <ALPHA> <DAY> <GRANULARITY> <DELAY> <DATA_FOLDER> <FLOW_PERCENTAGE> "
-           "<OPTIMIZE> <OPT-THRESHOLD> <OPT-TOLERANCE>\n";
+           "<OPTIMIZE> <OPT-THRESHOLD>\n";
     return 1;
   }
 
@@ -99,6 +98,7 @@ int main(int argc, char* argv[]) {
 
   std::ofstream sargs(std::format("{}/args.txt", OUT_FOLDER));
   sargs << "SEED: " << SEED << '\n';
+  sargs << "ALPHA: " << ALPHA << '\n';
   sargs << "DAY: " << DAY << '\n';
   sargs << "GRANULARITY: " << GRANULARITY << '\n';
   sargs << "DELAY: " << DELAY << '\n';
@@ -108,7 +108,7 @@ int main(int argc, char* argv[]) {
   sargs << "OPT_THRESHOLD: " << OPT_THRESHOLD << '\n';
   sargs.close();
 
-  std::cout << std::format("Using dsm version: {}", dsm::version()) << std::endl;
+  dsm::Logger::info(std::format("Using DSM version {}", dsm::version()));
   std::cout << std::format("Output folder: {}", OUT_FOLDER) << std::endl;
 
   std::cout << "Creating road segments..." << std::endl;
@@ -405,7 +405,7 @@ int main(int argc, char* argv[]) {
   dict << '}' << std::endl;
   dict.close();
   // Create the dynamics
-  Dynamics dynamics{graph, SEED, ALPHA};
+  Dynamics dynamics{graph, false, SEED, ALPHA};
   if (OPTIMIZE) {
     dynamics.setDataUpdatePeriod(INTERVAL_AGENTS_IN);
   }
@@ -794,7 +794,6 @@ int main(int argc, char* argv[]) {
       // }
       // std::clog << "Max queue: " << maxQueue.first << " with " << maxQueue.second
       //           << " agents" << std::endl;
-      dynamics.saveTravelSpeeds(OUT_FOLDER + "speeds.csv");
       auto const& meanSpeed{dynamics.streetMeanSpeed()};
       auto const& meanDensity{dynamics.streetMeanDensity(false)};
       auto const& meanFlow{dynamics.streetMeanFlow()};
@@ -808,6 +807,7 @@ int main(int argc, char* argv[]) {
           << ';' << meanFlow.mean << ';' << meanFlow.std << ';' << meanTravelTime.mean
           << ';' << meanTravelTime.std << ';' << meanTravelSpeed.mean << ';'
           << meanTravelSpeed.std << ';' << nGhosts << std::endl;
+      dynamics.saveTravelSpeeds(OUT_FOLDER + "speeds.csv", true);
     }
     if (dynamics.time() % GRANULARITY == 0) {
       dynamics.saveOutputStreetCounts(OUT_FOLDER + "output_counts.csv", true);
