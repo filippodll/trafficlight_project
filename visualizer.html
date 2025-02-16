@@ -152,18 +152,29 @@
 
         // Update edge paths
         link.attr("d", d => {
-          if (d.geometry && d.geometry.length > 0) {
-            const projectedCoords = d.geometry.map(pt => {
-              const point = map.latLngToLayerPoint([pt.y, pt.x]);
-              return [point.x, point.y];
-            });
-            return lineGenerator(projectedCoords);
-          } else {
-            // Fallback: draw a straight line between the two nodes
             const start = project(nodeMap.get(d.u));
             const end = project(nodeMap.get(d.v));
-            return lineGenerator([[start.x, start.y], [end.x, end.y]]);
-          }
+
+            // Count occurrences of edges between the same nodes
+            const bidirectional = edges.some(e => e.u === d.v && e.v === d.u);
+
+            let offsetX = 0, offsetY = 0;
+            
+            if (bidirectional) {
+                // Calculate a slight offset for bidirectional edges
+                const dx = end.x - start.x;
+                const dy = end.y - start.y;
+                const offset = 3; // Adjust this for better separation
+                const angle = Math.atan2(dy, dx);
+                
+                offsetX = offset * Math.sin(angle);
+                offsetY = offset * -Math.cos(angle);
+            }
+
+            return lineGenerator([
+                [start.x + offsetX, start.y + offsetY],
+                [end.x + offsetX, end.y + offsetY]
+            ]);
         });
 
         // Update node positions
