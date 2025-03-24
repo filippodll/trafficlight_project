@@ -140,7 +140,7 @@ int main(int argc, char* argv[]) {
   Street s5_6{
       11, std::make_pair(5, 6), 300., 13.9, 3, "4.45 4.44 4 1"};  // (814) 4.45 4.44 4 1
   Street s6_5{
-      12, std::make_pair(6, 5), 300., 13.9, 3, "4.44 4.45 8 1"};  // (812) 4.44 4.45 8 1
+      12, std::make_pair(6, 5), 300., 13.9, 2, "4.44 4.45 8 1"};  // (812) 4.44 4.45 8 1
 
   Street s6_7{
       13, std::make_pair(6, 7), 700., 13.9, 3, "4.44 4.41 4 1"};  // (811) 4.44 4.41 4 1
@@ -203,7 +203,7 @@ int main(int argc, char* argv[]) {
                1,
                "0.127 4.44 2 1"};  // (266) 0.127 4.44 2 1 //castiglione  (6)
   Street s6_17{30, std::make_pair(6, 17), 400., 8.3, 1};
-  Street s6_18{31, std::make_pair(6, 18), 200., 8.3, 1};
+  // Street s6_18{31, std::make_pair(6, 18), 200., 8.3, 1};
   Street s18_6{
       32, std::make_pair(18, 6), 200., 8.3, 1, "0.127 4.44 6 1"};  // (267) 0.127 4.44 6 1
 
@@ -214,8 +214,10 @@ int main(int argc, char* argv[]) {
       35, std::make_pair(20, 7), 350., 8.3, 1, "0.127 4.41 6 1"};  // (263) 0.127 4.41 6 1
 
   std::cout << "Creating traffic lights..." << std::endl;
+  dsm::RoadNetwork graph;
   // saragozza
-  TrafficLight saragozza{1, 127};
+  graph.addNode<TrafficLight>(1, 127);
+  auto& saragozza{graph.node<TrafficLight>(1)};
   saragozza.setStreetPriorities({s0_1.id(), s2_1.id()});
   saragozza.setCycle(s0_1.id(), dsm::Direction::LEFTANDSTRAIGHT, {82, 0});
   saragozza.setCycle(s0_1.id(), dsm::Direction::RIGHT, {112, 97});
@@ -229,7 +231,8 @@ int main(int argc, char* argv[]) {
   saragozza.setCycle(s10_1.id(), dsm::Direction::ANY, {15, 82});
 
   // vallescura
-  TrafficLight vallescura{2, 125};
+  graph.addNode<TrafficLight>(2, 125);
+  auto& vallescura{graph.node<TrafficLight>(2)};
   vallescura.setStreetPriorities({s1_2.id(), s3_2.id()});
   vallescura.setCycle(s1_2.id(), dsm::Direction::ANY, {78, 25});
 
@@ -239,7 +242,8 @@ int main(int argc, char* argv[]) {
   vallescura.setCycle(s11_2.id(), dsm::Direction::ANY, {25, 0});
   vallescura.setCycle(s12_2.id(), dsm::Direction::ANY, {25, 0});
   // san mamolo
-  TrafficLight sanmamolo{3, 155};
+  graph.addNode<TrafficLight>(3, 155);
+  auto& sanmamolo{graph.node<TrafficLight>(3)};
   sanmamolo.setStreetPriorities({s2_3.id(), s4_3.id()});
   sanmamolo.setCycle(s2_3.id(), dsm::Direction::RIGHTANDSTRAIGHT, {85, 0});
 
@@ -252,7 +256,8 @@ int main(int argc, char* argv[]) {
   sanmamolo.setCycle(s14_3.id(), dsm::Direction::ANY, {35, 120});
 
   // savenella
-  TrafficLight savenella{4, 83};
+  graph.addNode<TrafficLight>(4, 83);
+  auto& savenella{graph.node<TrafficLight>(4)};
   savenella.setStreetPriorities({s3_4.id(), s5_4.id()});
   savenella.setCycle(s3_4.id(), dsm::Direction::RIGHTANDSTRAIGHT, {83, 0});
   savenella.setCycle(s3_4.id(), dsm::Direction::LEFT, {30, 0});
@@ -260,7 +265,8 @@ int main(int argc, char* argv[]) {
   savenella.setCycle(s5_4.id(), dsm::Direction::ANY, {53, 30});
 
   // rubbiani
-  TrafficLight rubbiani{5, 95};
+  graph.addNode<TrafficLight>(5, 95);
+  auto& rubbiani{graph.node<TrafficLight>(5)};
   rubbiani.setStreetPriorities({s4_5.id(), s6_5.id()});
   rubbiani.setCycle(s4_5.id(), dsm::Direction::ANY, {55, 0});
   rubbiani.setCycle(s6_5.id(), dsm::Direction::ANY, {55, 0});
@@ -268,38 +274,30 @@ int main(int argc, char* argv[]) {
   rubbiani.setCycle(s16_5.id(), dsm::Direction::ANY, {40, 55});
 
   // castiglione
-  TrafficLight castiglione{6, 145};
+  graph.addNode<TrafficLight>(6, 145);
+  auto& castiglione{graph.node<TrafficLight>(6)};
   castiglione.setStreetPriorities({s5_6.id(), s7_6.id()});
-  castiglione.setCycle(s5_6.id(), dsm::Direction::ANY, {60, 0});
+  castiglione.setCycle(s5_6.id(), dsm::Direction::RIGHTANDSTRAIGHT, {60, 0});
 
   castiglione.setCycle(s7_6.id(), dsm::Direction::RIGHTANDSTRAIGHT, {85, 0});
-  castiglione.setCycle(s5_6.id(), dsm::Direction::LEFT, {25, 60});
+  castiglione.setCycle(s7_6.id(), dsm::Direction::LEFT, {25, 60});
 
   castiglione.setCycle(s17_6.id(), dsm::Direction::ANY, {60, 85});
   castiglione.setCycle(s18_6.id(), dsm::Direction::ANY, {60, 85});
 
   // santo stefano
-  TrafficLight santostefano{7, 115};
+  graph.addNode<TrafficLight>(7, 115);
+  auto& santostefano{graph.node<TrafficLight>(7)};
   santostefano.setStreetPriorities({s6_7.id(), s8_7.id()});
   santostefano.setCycle(s6_7.id(), dsm::Direction::RIGHT, {90, 0});
   santostefano.setCycle(s6_7.id(), dsm::Direction::LEFTANDSTRAIGHT, {35, 0});
 
-  santostefano.setCycle(s8_7.id(), dsm::Direction::RIGHTANDSTRAIGHT, {90, 0});
+  santostefano.setCycle(s8_7.id(), dsm::Direction::RIGHTANDSTRAIGHT, {90, 35});
   santostefano.setCycle(s8_7.id(), dsm::Direction::LEFT, {55, 35});
 
   santostefano.setCycle(s19_7.id(), dsm::Direction::ANY, {25, 90});
   santostefano.setCycle(s20_7.id(), dsm::Direction::ANY, {25, 90});
 
-  std::cout << "Creating graph..." << std::endl;
-  dsm::Graph graph;
-  std::cout << "Adding nodes..." << std::endl;
-  graph.addNode(std::make_unique<TrafficLight>(saragozza));
-  graph.addNode(std::make_unique<TrafficLight>(vallescura));
-  graph.addNode(std::make_unique<TrafficLight>(sanmamolo));
-  graph.addNode(std::make_unique<TrafficLight>(savenella));
-  graph.addNode(std::make_unique<TrafficLight>(rubbiani));
-  graph.addNode(std::make_unique<TrafficLight>(castiglione));
-  graph.addNode(std::make_unique<TrafficLight>(santostefano));
   std::cout << "Adding streets..." << std::endl;
   graph.addStreets(s0_1,
                    s1_0,
@@ -331,7 +329,6 @@ int main(int argc, char* argv[]) {
                    s16_5,
                    s17_6,
                    s6_17,
-                   s6_18,
                    s18_6,
                    s19_7,
                    s7_19,
@@ -371,12 +368,14 @@ int main(int argc, char* argv[]) {
   graph.buildAdj();
   std::cout << "Adjusting node capacities..." << std::endl;
   graph.adjustNodeCapacities();
+  graph.autoMapStreetLanes();
+  // return 0;
 
-  graph.exportCoordinates("./constants/coords.csv");
+  graph.exportNodes("./constants/coords.csv");
 
   std::cout << "Init input data preparation..." << std::endl;
-  auto const& matrix{graph.adjMatrix()};
-  auto const n{matrix.getColDim()};
+  auto const& matrix{graph.adjacencyMatrix()};
+  auto const n{matrix.n()};
   std::ofstream adj("./constants/adj.dat");
   adj << n << '\t' << n << '\n';
   for (unsigned int i = 0; i < n; ++i) {
@@ -390,7 +389,7 @@ int main(int argc, char* argv[]) {
   std::map<std::string, dsm::Id> coilmap;
   std::ofstream dict("./structures_out.py");
   dict << "COIL_DICT = {" << std::endl;
-  for (auto const& [id, street] : graph.streetSet()) {
+  for (auto const& [id, street] : graph.edges()) {
     if (street->isSpire()) {
       dict << '\"' << street->name() << "\": " << id << ",\n";  // Python dictionary
       coilmap[street->name()] = id;
@@ -399,7 +398,7 @@ int main(int argc, char* argv[]) {
   dict << '}' << std::endl;
   // Now append a dict with streetId: street name
   dict << "NAME_DICT = {" << std::endl;
-  for (auto const& [id, street] : graph.streetSet()) {
+  for (auto const& [id, street] : graph.edges()) {
     dict << id << ": \"" << street->name() << "\",\n";  // Python dictionary
   }
   dict << '}' << std::endl;
@@ -412,7 +411,7 @@ int main(int argc, char* argv[]) {
   // dynamics.setSpeedFluctuationSTD(0.1);
   // dynamics.setMaxFlowPercentage(0.75);
 
-  auto const& streets{dynamics.graph().streetSet()};
+  auto const& streets{dynamics.graph().edges()};
   // auto const& nodes{dynamics.graph().nodeSet()};
 
   std::cout << std::format("Importing input data...") << std::endl;
@@ -503,7 +502,7 @@ int main(int argc, char* argv[]) {
          "travelspeed;mean_travelspeed_err;nGhosts\n";
   std::ofstream streetQueues(OUT_FOLDER + "queues.csv");
   streetQueues << "time";
-  for (auto const& [id, street] : dynamics.graph().streetSet()) {
+  for (auto const& [id, street] : dynamics.graph().edges()) {
     streetQueues << ';' << id;
   }
   streetQueues << std::endl;
@@ -513,7 +512,7 @@ int main(int argc, char* argv[]) {
 
   std::map<dsm::Id, double> srcProbabilities, dstProbabilities;
 
-  auto const& adjMatrix{dynamics.graph().adjMatrix()};
+  auto const& adjMatrix{dynamics.graph().adjacencyMatrix()};
   // auto const& degreeVector{adjMatrix.getDegreeVector()};
 
   // for (auto const& [id, value] : degreeVector) {
@@ -539,16 +538,16 @@ int main(int argc, char* argv[]) {
       }
       // Balance every node input
       // std::unordered_map<dsm::Id, dsm::Size> synthetic_inner_data;
-      for (auto const& [nodeId, node] : dynamics.graph().nodeSet()) {
-        auto const& inputRoads{adjMatrix.getCol(nodeId, true)};
-        auto const& outputRoads{adjMatrix.getRow(nodeId, true)};
+      for (auto const& [nodeId, node] : dynamics.graph().nodes()) {
+        auto const& inputRoads{adjMatrix.getCol(nodeId)};
+        auto const& outputRoads{adjMatrix.getRow(nodeId)};
         int inputCounts{0};
         int outputCounts{0};
         std::set<dsm::Id> missingInput;
         std::set<dsm::Id> missingOutput;
         // Input roads
-        for (auto const& [inputStreetId, _] : inputRoads) {
-          auto const id = streets.at(inputStreetId)->nodePair().first;
+        for (auto const& id : inputRoads) {
+          auto const inputStreetId = id * adjMatrix.n() + nodeId;
           if (srcProbabilities.contains(id)) {
             inputCounts += srcProbabilities[id];
           } else if (inner_data.contains(inputStreetId)) {
@@ -560,8 +559,8 @@ int main(int argc, char* argv[]) {
           }
         }
         // Output roads
-        for (auto const& [outputStreetId, _] : outputRoads) {
-          auto const id = streets.at(outputStreetId)->nodePair().second;
+        for (auto const& id : outputRoads) {
+          auto const outputStreetId = nodeId * adjMatrix.n() + id;
           if (dstProbabilities.contains(id)) {
             outputCounts += dstProbabilities[id];
           } else if (inner_data.contains(outputStreetId)) {
@@ -744,35 +743,35 @@ int main(int argc, char* argv[]) {
 
     if (progress % INTERVAL_AGENTS_IN == 0) {
       auto const& agents{dynamics.agents()};
-      nGhosts = std::count_if(agents.begin(), agents.end(), [](auto const& agent) {
-        return !agent.second->streetId().has_value();
-      });
+      // nGhosts = std::count_if(agents.begin(), agents.end(), [](auto const& agent) {
+      //   return !agent.second->streetId().has_value();
+      // });
       try {
-        dynamics.addAgentsRandomly(nAgents, srcProbabilities, dstProbabilities, 0);
+        dynamics.addAgentsRandomly(nAgents, srcProbabilities, dstProbabilities);
       } catch (const std::exception& e) {
         std::cout << std::format("Error adding agents: {}", e.what()) << std::endl;
         std::cout << std::format("There are still {} agents in the system.",
                                  dynamics.agents().size())
                   << std::endl;
         std::cout << std::format("Writing agent dump to file...") << std::endl;
-        std::ofstream agentDump(OUT_FOLDER + "agent_dump.csv");
-        agentDump << "id;src;dst;delay;street\n";
-        for (auto const& [id, agent] : dynamics.agents()) {
-          agentDump << id << ';' << agent->srcNodeId().value() << ';'
-                    << agent->itineraryId() << ';';
-          agentDump << static_cast<int>(agent->delay()) << ';';
-          if (agent->streetId().has_value()) {
-            agentDump << agent->streetId().value();
-          }
-          agentDump << std::endl;
-        }
+        // std::ofstream agentDump(OUT_FOLDER + "agent_dump.csv");
+        // agentDump << "id;src;dst;delay;street\n";
+        // for (auto const& [id, agent] : dynamics.agents()) {
+        //   agentDump << id << ';' << agent->srcNodeId().value() << ';'
+        //             << agent->itineraryId() << ';';
+        //   agentDump << static_cast<int>(agent->delay()) << ';';
+        //   if (agent->streetId().has_value()) {
+        //     agentDump << agent->streetId().value();
+        //   }
+        //   agentDump << std::endl;
+        // }
         bExitFlag = true;
         break;
       }
     }
     dynamics.evolve(false);
 
-    if (OPTIMIZE && dynamics.time() % GRANULARITY == 0) {
+    if (OPTIMIZE && dynamics.time() % 720 == 0) {
       dynamics.optimizeTrafficLights(OPT_THRESHOLD, optType);  // 0.3, NEAREST_NEIGHBOUR
     }
 
@@ -781,7 +780,7 @@ int main(int argc, char* argv[]) {
     if (dynamics.time() % GRANULARITY == 0) {
       // std::pair<dsm::Id, dsm::Size> maxQueue{0, 0};
       // std::clog << "Time: " << dynamics.time() << std::endl;
-      // for (auto const& [id, street] : dynamics.graph().streetSet()) {
+      // for (auto const& [id, street] : dynamics.graph().edges()) {
       //   std::clog << "Street " << id << '\t';
       //   for (auto i{0}; i < street->nLanes(); ++i) {
       //     auto const& queue{street->queue(i)};
@@ -816,7 +815,7 @@ int main(int argc, char* argv[]) {
     if (dynamics.time() % GRANULARITY == 0) {
       dynamics.saveStreetDensities(OUT_FOLDER + "densities.csv");
       streetQueues << dynamics.time();
-      for (auto const& [id, street] : dynamics.graph().streetSet()) {
+      for (auto const& [id, street] : dynamics.graph().edges()) {
         streetQueues << ';'
                      << static_cast<double>(street->nExitingAgents()) /
                             street->capacity();

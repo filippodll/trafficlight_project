@@ -1,5 +1,5 @@
 viali: 
-	python viali.py -d 2024-06-03 -t 30 -r
+	python viali.py -d 2023-05-12 -t 30 -r
 viali_debug: 
 	clear
 	cmake -B build -DCMAKE_BUILD_TYPE=Debug && make -C build
