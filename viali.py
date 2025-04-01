@@ -21,6 +21,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     cmd("clear")
     if args.run:
+        # cmd("cmake -B debug -DCMAKE_BUILD_TYPE=Debug && make -C debug")
         cmd("cmake -B build -DCMAKE_BUILD_TYPE=Release && make -C build")
         cmd(f"./viali.out 69 0.6 {args.date} 300 1 ./signal 100 0 {args.threshold}")
         # cmd(f"./viali_stoc.out 69 0.6 {args.date} 300 1 ./signal 100 0 {args.threshold}")

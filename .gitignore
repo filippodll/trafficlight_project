@@ -1,6 +1,7 @@
 # Foders
 __pycache__
 .vscode
+debug/*
 build
 temp_img
 signal
