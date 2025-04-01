@@ -95,6 +95,10 @@ int main(int argc, char* argv[]) {
     fs::remove_all("./constants");
   }
   fs::create_directory("./constants");
+  // if exists remove ./tlog.txt
+  if (fs::exists("./tlog.txt")) {
+    fs::remove("./tlog.txt");
+  }
 
   std::ofstream sargs(std::format("{}/args.txt", OUT_FOLDER));
   sargs << "SEED: " << SEED << '\n';
@@ -219,14 +223,14 @@ int main(int argc, char* argv[]) {
   graph.addNode<TrafficLight>(1, 127);
   auto& saragozza{graph.node<TrafficLight>(1)};
   saragozza.setStreetPriorities({s0_1.id(), s2_1.id()});
-  saragozza.setCycle(s0_1.id(), dsm::Direction::LEFTANDSTRAIGHT, {82, 0});
-  saragozza.setCycle(s0_1.id(), dsm::Direction::RIGHT, {112, 97});
+  saragozza.setCycle(s0_1.id(), dsm::Direction::STRAIGHT, {82, 0});
+  // saragozza.setCycle(s0_1.id(), dsm::Direction::RIGHT, {112, 97});
 
-  saragozza.setCycle(s2_1.id(), dsm::Direction::RIGHTANDSTRAIGHT, {82, 0});
+  saragozza.setCycle(s2_1.id(), dsm::Direction::STRAIGHT, {82, 0});
   saragozza.setCycle(s2_1.id(), dsm::Direction::LEFT, {30, 82});
 
-  saragozza.setCycle(s9_1.id(), dsm::Direction::RIGHT, {127, 0});
-  saragozza.setCycle(s9_1.id(), dsm::Direction::LEFTANDSTRAIGHT, {30, 97});
+  // saragozza.setCycle(s9_1.id(), dsm::Direction::RIGHT, {127, 0});
+  saragozza.setCycle(s9_1.id(), dsm::Direction::LEFT, {30, 97});
 
   saragozza.setCycle(s10_1.id(), dsm::Direction::ANY, {15, 82});
 
@@ -234,9 +238,9 @@ int main(int argc, char* argv[]) {
   graph.addNode<TrafficLight>(2, 125);
   auto& vallescura{graph.node<TrafficLight>(2)};
   vallescura.setStreetPriorities({s1_2.id(), s3_2.id()});
-  vallescura.setCycle(s1_2.id(), dsm::Direction::ANY, {78, 25});
+  vallescura.setCycle(s1_2.id(), dsm::Direction::RIGHTANDSTRAIGHT, {78, 25});
 
-  vallescura.setCycle(s3_2.id(), dsm::Direction::RIGHTANDSTRAIGHT, {100, 25});
+  vallescura.setCycle(s3_2.id(), dsm::Direction::STRAIGHT, {100, 25});
   vallescura.setCycle(s3_2.id(), dsm::Direction::LEFT, {22, 103});
 
   vallescura.setCycle(s11_2.id(), dsm::Direction::ANY, {25, 0});
@@ -246,11 +250,12 @@ int main(int argc, char* argv[]) {
   auto& sanmamolo{graph.node<TrafficLight>(3)};
   sanmamolo.setStreetPriorities({s2_3.id(), s4_3.id()});
   sanmamolo.setCycle(s2_3.id(), dsm::Direction::RIGHTANDSTRAIGHT, {85, 0});
+  s2_3.addForbiddenTurn(s3_14.id());
 
   sanmamolo.setCycle(s4_3.id(), dsm::Direction::RIGHTANDSTRAIGHT, {120, 0});
   sanmamolo.setCycle(s4_3.id(), dsm::Direction::LEFT, {35, 85});
 
-  sanmamolo.setCycle(s13_3.id(), dsm::Direction::RIGHT, {130, 25});
+  // sanmamolo.setCycle(s13_3.id(), dsm::Direction::RIGHT, {130, 25});
   sanmamolo.setCycle(s13_3.id(), dsm::Direction::LEFTANDSTRAIGHT, {35, 120});
 
   sanmamolo.setCycle(s14_3.id(), dsm::Direction::ANY, {35, 120});
@@ -259,17 +264,17 @@ int main(int argc, char* argv[]) {
   graph.addNode<TrafficLight>(4, 83);
   auto& savenella{graph.node<TrafficLight>(4)};
   savenella.setStreetPriorities({s3_4.id(), s5_4.id()});
-  savenella.setCycle(s3_4.id(), dsm::Direction::RIGHTANDSTRAIGHT, {83, 0});
+  savenella.setCycle(s3_4.id(), dsm::Direction::STRAIGHT, {83, 0});
   savenella.setCycle(s3_4.id(), dsm::Direction::LEFT, {30, 0});
 
-  savenella.setCycle(s5_4.id(), dsm::Direction::ANY, {53, 30});
+  savenella.setCycle(s5_4.id(), dsm::Direction::RIGHTANDSTRAIGHT, {53, 30});
 
   // rubbiani
   graph.addNode<TrafficLight>(5, 95);
   auto& rubbiani{graph.node<TrafficLight>(5)};
   rubbiani.setStreetPriorities({s4_5.id(), s6_5.id()});
-  rubbiani.setCycle(s4_5.id(), dsm::Direction::ANY, {55, 0});
-  rubbiani.setCycle(s6_5.id(), dsm::Direction::ANY, {55, 0});
+  rubbiani.setCycle(s4_5.id(), dsm::Direction::STRAIGHT, {55, 0});
+  rubbiani.setCycle(s6_5.id(), dsm::Direction::STRAIGHT, {55, 0});
 
   rubbiani.setCycle(s16_5.id(), dsm::Direction::ANY, {40, 55});
 
@@ -290,7 +295,7 @@ int main(int argc, char* argv[]) {
   auto& santostefano{graph.node<TrafficLight>(7)};
   santostefano.setStreetPriorities({s6_7.id(), s8_7.id()});
   santostefano.setCycle(s6_7.id(), dsm::Direction::RIGHT, {90, 0});
-  santostefano.setCycle(s6_7.id(), dsm::Direction::LEFTANDSTRAIGHT, {35, 0});
+  santostefano.setCycle(s6_7.id(), dsm::Direction::STRAIGHT, {35, 0});
 
   santostefano.setCycle(s8_7.id(), dsm::Direction::RIGHTANDSTRAIGHT, {90, 35});
   santostefano.setCycle(s8_7.id(), dsm::Direction::LEFT, {55, 35});
@@ -368,7 +373,9 @@ int main(int argc, char* argv[]) {
   graph.buildAdj();
   std::cout << "Adjusting node capacities..." << std::endl;
   graph.adjustNodeCapacities();
+  dsm::Logger::setLogLevel(dsm::log_level_t::DEBUG);
   graph.autoMapStreetLanes();
+  dsm::Logger::setLogLevel(dsm::log_level_t::WARNING);
   // return 0;
 
   graph.exportNodes("./constants/coords.csv");
@@ -771,8 +778,8 @@ int main(int argc, char* argv[]) {
     }
     dynamics.evolve(false);
 
-    if (OPTIMIZE && dynamics.time() % 720 == 0) {
-      dynamics.optimizeTrafficLights(OPT_THRESHOLD, optType);  // 0.3, NEAREST_NEIGHBOUR
+    if (OPTIMIZE && dynamics.time() % 600 == 0) {
+      dynamics.optimizeTrafficLights(OPT_THRESHOLD, optType, "./tlog.txt");  // 0.3, NEAREST_NEIGHBOUR
     }
 
     // OUTPUTS   -   -   -
