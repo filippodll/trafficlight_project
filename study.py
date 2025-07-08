@@ -290,14 +290,14 @@ if __name__ == "__main__":
         plt.plot(
             df_opt_single["mean_density"],
             df_opt_single["mean_traveltime"],
-            label="Single-tail optimization",
+            label="Local optimization",
             marker="x",
         )
     if df_opt_double is not None:
         plt.plot(
             df_opt_double["mean_density"],
             df_opt_double["mean_traveltime"],
-            label="Double-tail optimization",
+            label="Non-local optimization",
             marker="^",
         )
     plt.plot(
@@ -316,26 +316,40 @@ if __name__ == "__main__":
     ########################################################################################
     fig, ax = plt.subplots(figsize=(16, 9))
     print(f"Day {args.day}")
-    print(
-        f"Mean travel time: {int(df_data["mean_traveltime"].mean())} ± {int(df_data["mean_traveltime"].std())} s"
-    )
+    # Apply rolling mean over 12 points for smoother curves
+    df_data_rm = df_data.copy()
+    df_data_rm["mean_traveltime"] = df_data["mean_traveltime"].rolling(12, min_periods=1, center=True).mean()
     if df_opt_single is not None:
-        ax.plot(
-            df_opt_single["mean_traveltime"],
-            label="Single-tail optimization",
-        )
-        print(
-            f"Mean traveltime (single-tail opt): {int(df_opt_single["mean_traveltime"].mean())} ± {int(df_opt_single["mean_traveltime"].std())} s"
-        )
+        df_opt_single_rm = df_opt_single.copy()
+        df_opt_single_rm["mean_traveltime"] = df_opt_single["mean_traveltime"].rolling(12, min_periods=1, center=True).mean()
+    else:
+        df_opt_single_rm = None
     if df_opt_double is not None:
+        df_opt_double_rm = df_opt_double.copy()
+        df_opt_double_rm["mean_traveltime"] = df_opt_double["mean_traveltime"].rolling(12, min_periods=1, center=True).mean()
+    else:
+        df_opt_double_rm = None
+
+    print(
+        f"Mean travel time: {int(df_data_rm['mean_traveltime'].mean())} ± {int(df_data_rm['mean_traveltime'].std())} s"
+    )
+    if df_opt_single_rm is not None:
         ax.plot(
-            df_opt_double["mean_traveltime"],
-            label="Double-tail optimization",
+            df_opt_single_rm["mean_traveltime"],
+            label="Local optimization",
         )
         print(
-            f"Mean traveltime (double-tail opt): {int(df_opt_double["mean_traveltime"].mean())} ± {int(df_opt_double["mean_traveltime"].std())} s"
+            f"Mean traveltime (Local opt): {int(df_opt_single_rm['mean_traveltime'].mean())} ± {int(df_opt_single_rm['mean_traveltime'].std())} s"
         )
-    ax.plot(df_data["mean_traveltime"], label="Normal")
+    if df_opt_double_rm is not None:
+        ax.plot(
+            df_opt_double_rm["mean_traveltime"],
+            label="Non-local optimization",
+        )
+        print(
+            f"Mean traveltime (Non-local opt): {int(df_opt_double_rm['mean_traveltime'].mean())} ± {int(df_opt_double_rm['mean_traveltime'].std())} s"
+        )
+    ax.plot(df_data_rm["mean_traveltime"], label="Normal")
     ax.set_xticks(
         np.arange(args.start_time, 288, 12),
         [
@@ -349,7 +363,7 @@ if __name__ == "__main__":
     ax.grid(linestyle="--")
     ax.legend(fontsize="xx-large", loc="upper left")
     ax.tick_params(axis="both", which="major", labelsize=14)
-    plt.title(f"{args.day}\nMean travel time over time", fontsize="xx-large")
+    plt.title(f"Bologna's viali - rolling mean (1 hour), {args.day.split('-')[2]}/{args.day.split('-')[1]}/{args.day.split('-')[0]}", fontsize="xx-large")
 
     plt.savefig(f"./output/{args.day}/traveltime.png")
 
@@ -361,13 +375,13 @@ if __name__ == "__main__":
         ax.plot(
             df_opt_single["time"],
             df_opt_single["mean_density"],
-            label="Single-tail optimization",
+            label="Local optimization",
         )
     if df_opt_double is not None:
         ax.plot(
             df_opt_double["time"],
             df_opt_double["mean_density"],
-            label="Double-tail optimization",
+            label="Non-local optimization",
         )
     ax.plot(df_data["time"], df_data["mean_density"], label="Normal")
     ax.set_xticks(

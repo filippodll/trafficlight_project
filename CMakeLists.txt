@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16.0)
 
-project(dsm_examples VERSION 1.3.10 LANGUAGES CXX)
+project(dsf_examples VERSION 1.3.10 LANGUAGES CXX)
 
 # Set the C++ standard
 set(CMAKE_CXX_STANDARD 20)
@@ -16,7 +16,7 @@ elseif (CMAKE_BUILD_TYPE STREQUAL "Release")
   string(APPEND CMAKE_CXX_FLAGS "-Ofast -march=native -flto=2")
 endif()
 
-find_package(dsm REQUIRED)
+find_package(dsf REQUIRED)
 
 # Set the folder for the executable
 set(EXECUTABLE_OUTPUT_PATH ../)
@@ -28,6 +28,6 @@ file(GLOB SOURCES "*.cpp")
 foreach(SOURCE ${SOURCES})
     get_filename_component(EXE_NAME ${SOURCE} NAME_WE)
 	add_executable(${EXE_NAME}.out ${SOURCE} ${SRC_SOURCES})
-    target_include_directories(${EXE_NAME}.out PRIVATE ../src/dsm/headers/ ../src/dsm/utility/TypeTraits/ ../src/dsm/utility/)
-    target_link_libraries(${EXE_NAME}.out PRIVATE dsm::dsm TBB::tbb)
+    target_include_directories(${EXE_NAME}.out PRIVATE ../src/dsf/headers/ ../src/dsf/utility/TypeTraits/ ../src/dsf/utility/)
+    target_link_libraries(${EXE_NAME}.out PRIVATE dsf::dsf TBB::tbb)
 endforeach()

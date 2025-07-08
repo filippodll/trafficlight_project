@@ -21,8 +21,13 @@ import matplotlib.pyplot as plt
 plt.plot(df['time'], df['mean_density'], label='Realistic traffic lights')
 plt.plot(df_stoc['time'], df_stoc['mean_density'], label='Passage probability')
 # plt.plot(df_notl['time'], df_notl['mean_density'], label='mean_density_notl')
-plt.legend()
-plt.xlabel('Time (s)')
-plt.ylabel('Mean density (a.u.)')
+# Labels and legend with bigger fonts
+plt.xlabel('Time (s)', fontsize=18)
+plt.ylabel('Mean density (a.u.)', fontsize=18)
+plt.legend(fontsize=16)
+
+# Increase tick size
+plt.xticks(fontsize=14)
+plt.yticks(fontsize=14)
 
 plt.show()

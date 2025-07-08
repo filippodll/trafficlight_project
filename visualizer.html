@@ -3,66 +3,27 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Road Network Visualization with OpenStreetMap</title>
+  <title>Road Network Visualization with Directed Edges</title>
   
-  <!-- Leaflet CSS and JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-  <!-- D3.js -->
   <script src="https://d3js.org/d3.v7.min.js"></script>
 
   <style>
-    body, html {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-    }
-    
-    /* Fullscreen map */
-    #map {
-      width: 100%;
-      height: 100vh;
-      position: absolute;
-      top: 0;
-      left: 0;
-    }
-
-    /* Slider container */
+    body, html { margin: 0; padding: 0; width: 100%; height: 100%; }
+    #map { width: 100%; height: 100vh; position: absolute; top: 0; left: 0; }
     .slider-container {
-      position: absolute;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 1000;
-      width: 80%;
-      padding: 10px;
-      background: rgba(255, 255, 255, 0.8);
+      position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+      z-index: 1000; width: 80%; padding: 10px; background: rgba(255, 255, 255, 0.8);
     }
-
-    .slider-container input {
-      width: 100%;
-    }
-
-    /* SVG container on top of Leaflet */
-    .leaflet-overlay-pane svg {
-      position: absolute;
-    }
-
-    circle {
-      fill: black;
-      stroke: white;
-      stroke-width: 1;
-    }
+    .slider-container input { width: 100%; }
+    circle { fill: black; stroke: white; stroke-width: 1; }
+    path { fill: none; stroke-width: 4; }
+    marker { fill: black; }
   </style>
 </head>
 <body>
-
-  <!-- Map container -->
   <div id="map"></div>
-
-  <!-- Slider for time step -->
   <div class="slider-container">
     <label for="timeSlider">Time Step:</label>
     <input type="range" id="timeSlider" min="0" step="300" value="0" />
@@ -70,24 +31,16 @@
   </div>
 
   <script>
-    // Initialize the Leaflet map
-    const map = L.map('map').setView([44.4949, 11.3426], 13); // Centered on Bologna, Italy
-
-    // Add OpenStreetMap tile layer with inverted grayscale effect
-    const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    const map = L.map('map').setView([44.4949, 11.3426], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
     }).addTo(map);
-    tileLayer.getContainer().style.filter = 'grayscale(100%) invert(100%)';
-
-    // Create an overlay for D3 visualizations
     L.svg().addTo(map);
+
     const overlay = d3.select(map.getPanes().overlayPane).select("svg");
     const g = overlay.append("g").attr("class", "leaflet-zoom-hide");
+    let nodes, edges, densities, timeStep = 0;
 
-    let nodes, edges, densities;
-    let timeStep = 0;
-
-    // Load CSV data for nodes, edges, and densities
     Promise.all([
       d3.dsv(";", "./visual_data/nodes.csv", parseNodes),
       d3.dsv(";", "./visual_data/edges.csv", parseEdges),
@@ -96,48 +49,34 @@
       nodes = nodesData;
       edges = edgesData;
       densities = densityData;
-
-      // console.log("Nodes:", nodes);
-      // console.log("Edges:", edges);
-      // console.log("Densities:", densities);
-
-      if (!nodes.length || !edges.length || !densities.length) {
-        console.error("Missing CSV data.");
-        return;
-      }
-
-      // Create a map of nodes keyed by their id for quick lookup
       const nodeMap = new Map(nodes.map(d => [d.id, d]));
-
-      // Filter out edges whose nodes do not exist
       edges = edges.filter(d => nodeMap.has(d.u) && nodeMap.has(d.v));
 
-      // Create a color scale for density values using three color stops
-      const colorScale = d3.scaleLinear()
-        .domain([0, 0.5, 1])
-        .range(["green", "yellow", "red"]);
+      const colorScale = d3.scaleLinear().domain([0, 0.5, 1]).range(["green", "yellow", "red"]);
+      const lineGenerator = d3.line().x(d => d[0]).y(d => d[1]);
 
-      // Function to project geographic coordinates into Leaflet's layer point coordinates
-      function project(d) {
-        return map.latLngToLayerPoint([d.y, d.x]);
-      }
+      const marker = overlay.append("defs").append("marker")
+        .attr("id", "arrowhead")
+        .attr("viewBox", "0 -5 10 10")
+        .attr("refX", 10)
+        .attr("refY", 0)
+        .attr("markerWidth", 6)
+        .attr("markerHeight", 6)
+        .attr("orient", "auto")
+        .append("path")
+        .attr("d", "M0,-5L10,0L0,5")
+        .attr("fill", "black");
 
-      // D3 line generator to draw paths
-      const lineGenerator = d3.line()
-        .x(d => d[0])
-        .y(d => d[1]);
+      function project(d) { return map.latLngToLayerPoint([d.y, d.x]); }
 
-      // Draw edges as SVG paths
       const link = g.selectAll("path")
         .data(edges)
         .enter()
         .append("path")
-        .attr("fill", "none")
         .attr("stroke", "white")
-        .attr("stroke-width", 5);
-        // .attr("stroke-dasharray", d => d.highway === "motorway" ? "4,4" : "none");
+        .attr("stroke-width", 3)
+        .attr("marker-end", "url(#arrowhead)");
 
-      // Draw nodes as SVG circles
       const node = g.selectAll("circle")
         .data(nodes)
         .enter()
@@ -145,118 +84,47 @@
         .attr("r", 3)
         .attr("fill", "blue");
 
-      // Function to update node and edge positions, and color edges based on density
       function update() {
-        // Project nodes to current map coordinates
         nodes.forEach(d => d.projected = project(d));
-
-        // Update edge paths
         link.attr("d", d => {
-          if (d.geometry && d.geometry.length > 0) {
-            const projectedCoords = d.geometry.map(pt => {
-              const point = map.latLngToLayerPoint([pt.y, pt.x]);
-              return [point.x, point.y];
-            });
-            return lineGenerator(projectedCoords);
-          } else {
-            // Fallback: draw a straight line between the two nodes
-            const start = project(nodeMap.get(d.u));
-            const end = project(nodeMap.get(d.v));
-            return lineGenerator([[start.x, start.y], [end.x, end.y]]);
-          }
+          const start = project(nodeMap.get(d.u));
+          const end = project(nodeMap.get(d.v));
+          const midX = (start.x + end.x) / 2 + (start.y - end.y) * 0.15;
+          const midY = (start.y + end.y) / 2 + (end.x - start.x) * 0.15;
+          return lineGenerator([[start.x, start.y], [midX, midY], [end.x, end.y]]);
         });
-
-        // Update node positions
-        node.attr("cx", d => d.projected.x)
-            .attr("cy", d => d.projected.y);
-
+        node.attr("cx", d => d.projected.x).attr("cy", d => d.projected.y);
         updateDensityVisualization();
       }
 
-      map.on("zoomend", update);
-      update(); // Initial render
-
-      // Update edge colors based on the current time step density data
       function updateDensityVisualization() {
         const currentDensityRow = densities.find(d => d.time === timeStep);
-        if (!currentDensityRow) {
-          console.error("No density data for time step:", timeStep);
-          return;
-        }
+        if (!currentDensityRow) return;
         const currentDensities = currentDensityRow.densities;
-
-        // For each edge, update the stroke color based on its density value
         edges.forEach((edge, index) => {
-          let density = currentDensities[index];
-          if (density === undefined || isNaN(density)) {
-            console.warn(`Edge index ${index} has invalid density. Defaulting to 0.`);
-            density = 0;
-          }
-          const color = colorScale(density);
-          link.filter((d, i) => i === index)
-              .attr("stroke", color);
+          let density = currentDensities[index] || 0;
+          link.filter((d, i) => i === index).attr("stroke", colorScale(density));
         });
       }
 
-      // Set up the time slider based on the density data's maximum time value
-      const maxTimeStep = d3.max(densities, d => d.time);
+      map.on("zoomend", update);
+      update();
+
       const timeSlider = document.getElementById('timeSlider');
       const timeLabel = document.getElementById('timeLabel');
-      // Round up max to the nearest 300 for step consistency
-      timeSlider.max = Math.ceil(maxTimeStep / 300) * 300;
-      timeSlider.step = 300;
-      timeLabel.textContent = `Time Step: ${timeStep}`;
-
-      // Update the visualization when the slider value changes
+      timeSlider.max = Math.ceil(d3.max(densities, d => d.time) / 300) * 300;
       timeSlider.addEventListener('input', function() {
         timeStep = parseInt(timeSlider.value);
         timeLabel.textContent = `Time Step: ${timeStep}`;
         update();
       });
-    }).catch(error => {
-      console.error("Error loading CSV files:", error);
     });
 
-    // Parsing function for nodes CSV
-    function parseNodes(d) {
-      return {
-        id: d.id,
-        x: +d.x, // Longitude
-        y: +d.y  // Latitude
-      };
-    }
-
-    // Parsing function for edges CSV, including geometry parsing
-    function parseEdges(d) {
-      let geometry = [];
-      if (d.geometry) {
-        const coordsStr = d.geometry.replace(/^LINESTRING\s*\(/, '').replace(/\)$/, '');
-        geometry = coordsStr.split(",").map(coordStr => {
-          const coords = coordStr.trim().split(/\s+/);
-          return { x: +coords[0], y: +coords[1] };
-        });
-      }
-      return {
-        osm_id: d.id,
-        u: d.source,
-        v: d.target,
-        name: d.name,
-        geometry: geometry
-      };
-    }
-
-    // Parsing function for density CSV
+    function parseNodes(d) { return { id: d.id, x: +d.x, y: +d.y }; }
+    function parseEdges(d) { return { osm_id: d.id, u: d.source, v: d.target, name: d.name }; }
     function parseDensity(d) {
-      const time = +d.time;
-      const densities = Object.keys(d)
-        .filter(key => key !== 'time')
-        .map(key => {
-          const val = d[key] ? d[key].trim() : "";
-          return val === "" ? 0 : +val;
-        });
-      return { time, densities };
+      return { time: +d.time, densities: Object.keys(d).filter(k => k !== 'time').map(k => +d[k] || 0) };
     }
   </script>
-
 </body>
 </html>

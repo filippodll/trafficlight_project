@@ -17,17 +17,20 @@ if __name__ == "__main__":
     parser.add_argument(
         "-t", "--threshold", required=True, type=float, help="Threshold"
     )
+    parser.add_argument(
+        "--ratio", required=True, type=float, help="Ratio for non-local threshold"
+    )
     parser.add_argument("-r", "--run", action="store_true", help="Run the simulation")
     args = parser.parse_args()
     cmd("clear")
     if args.run:
         # cmd("cmake -B debug -DCMAKE_BUILD_TYPE=Debug && make -C debug")
         cmd("cmake -B build -DCMAKE_BUILD_TYPE=Release && make -C build")
-        cmd(f"./viali.out 69 0.6 {args.date} 300 1 ./signal 100 0 {args.threshold}")
+        cmd(f"./viali.out 69 0.6 {args.date} 300 1 ./signal 100 0 {args.threshold} 0")
         # cmd(f"./viali_stoc.out 69 0.6 {args.date} 300 1 ./signal 100 0 {args.threshold}")
         # cmd(f"./viali_notl.out 69 0.6 {args.date} 300 1 ./signal 100")
-        cmd(f"./viali.out 69 0.6 {args.date} 300 1 ./signal 100 1 {args.threshold}")
-        cmd(f"./viali.out 69 0.6 {args.date} 300 1 ./signal 100 2 {args.threshold}")
+        cmd(f"./viali.out 69 0.6 {args.date} 300 1 ./signal 100 1 {args.threshold} 0")
+        cmd(f"./viali.out 69 0.6 {args.date} 300 1 ./signal 100 2 {args.threshold} {args.ratio}")
     cmd(
         f"python study.py --day {args.date} --n-nodes 21 --input-folder ./signal --start-time 5"
     )
